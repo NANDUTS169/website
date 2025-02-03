@@ -1,2 +1,4 @@
+# files that don't need to uploaded to the git
+
 .env
 node_modules/
