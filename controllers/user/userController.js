@@ -275,6 +275,7 @@ const resendotp = async (req,res) => {
 } 
 
 const logout = async(req,res) => {
+    console.log('logout function invoked');
     try {
         req.session.destroy((err) => {
             if(err){

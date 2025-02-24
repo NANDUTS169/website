@@ -46,13 +46,14 @@ app.use(express.static(path.join(__dirname,"Public")));
 app.use("/",userRouter);
 app.use("/admin",adminRouter);
 
-app.use(errorHandling.errorHandling)
+// app.use(errorHandling.errorHandling)
 
 
 PORT = 3000 || process.env.PORT;
 app.listen(process.env.PORT, () => {
     console.log("Server running");
 })
+
 
 
 
