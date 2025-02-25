@@ -43,20 +43,15 @@ app.set("views",[path.join(__dirname,'views/user'),path.join(__dirname,'views/ad
 app.use(express.static(path.join(__dirname,"Public")));
 
 
-app.use("/",userRouter);
 app.use("/admin",adminRouter);
+app.use("/",userRouter);
 
-// app.use(errorHandling.errorHandling)
+app.use(errorHandling.errorHandling);
 
 
-PORT = 3000 || process.env.PORT;
+const PORT = process.env.PORT || 3000;
 app.listen(process.env.PORT, () => {
     console.log("Server running");
 })
-
-
-
-
-
 
 module.exports = app;

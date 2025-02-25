@@ -1,0 +1,247 @@
+<%-include("../../views/partials/admin/header")%>
+
+      <section class="content-main">
+        <div class="content-header">
+          <div>
+            <h2 class="content-title card-title">Categories</h2>
+            <p>Add, edit or delete a category</p>
+          </div>
+          <div>
+            <input
+              type="text"
+              placeholder="Search Categories"
+              class="form-control bg-white"
+            />
+          </div>
+        </div>
+        <div class="card">
+          <div class="card-body">
+            <div class="row">
+              <div class="col-md-3">
+                <form method="post" action="/admin/addCategory" onsubmit="return handleFormSubmit(event)">
+                  <div class="mb-4">
+                    <label for="product_name" class="form-label">Name</label>
+                    <input
+                      type="text"
+                      placeholder="Type here"
+                      class="form-control"
+                      id="product_name"
+                      name="name"
+                    />
+                  </div>
+
+                  <!-- <div class="mb-4">
+                    <label for="product_slug" class="form-label">Slug</label>
+                    <input
+                      type="text"
+                      placeholder="Type here"
+                      class="form-control"
+                      id="product_slug"
+                    />
+                  </div>
+                  <div class="mb-4">
+                    <label class="form-label">Parent</label>
+                    <select class="form-select">
+                      <option>Fruit</option>
+                      <option>Snack</option>
+                    </select>
+                  </div> -->
+                  
+                  <div class="mb-4">
+                    <label class="form-label">Description</label>
+                    <textarea
+                      placeholder="Type here"
+                      class="form-control"
+                      id="descriptionId"
+                    ></textarea>
+                  </div>
+                  <div class="d-grid">
+                    <button type="submit" class="btn btn-primary">Create category</button>
+                  </div>
+                </form>
+              </div>
+              <div class="col-md-9">
+                <div class="table-responsive">
+                  <table class="table table-hover">
+                    <thead>
+                      <tr>
+                        <th class="text-center">
+                          <div class="form-check">
+                            <input
+                              class="form-check-input"
+                              type="checkbox"
+                              value=""
+                            />
+                          </div>
+                        </th>
+                        <th>ID</th>
+                        <th>Name</th>
+                        <th>Description</th>
+                        <th>Slug</th>
+                        <th>Order</th>
+                        <th class="text-end">Action</th>
+                      </tr>
+                    </thead>
+                    <tbody>
+                      <%cat.reverse().forEach((category,index) => {%>
+                      <tr>
+                        <td class="text-center">
+                          <div class="form-check">
+                            <input
+                              class="form-check-input"
+                              type="checkbox"
+                              value=""
+                            />
+                          </div>
+                        </td>
+                        <td>21</td>
+                        <td><b><%= category.name %></b></td>
+                        <td><%= category.description %></td>
+                        <td>/cake</td>
+                        <td>1</td>
+                        <td class="text-end">
+                          <div class="dropdown">
+                            <a
+                              href="#"
+                              data-bs-toggle="dropdown"
+                              class="btn btn-light rounded btn-sm font-sm"
+                            >
+                              <i class="material-icons md-more_horiz"></i>
+                            </a>
+                            <div class="dropdown-menu">
+                              <a class="dropdown-item" href="#">View detail</a>
+                              <a class="dropdown-item" href="#">Edit info</a>
+                              <a class="dropdown-item text-danger" href="#"
+                                >Delete</a
+                              >
+                            </div>
+                          </div>
+                          <!-- dropdown //end -->
+                        </td>
+                      </tr>
+
+                      <%})%>
+                    </tbody>
+                  </table>
+                </div>
+              </div>
+              <!-- .col// -->
+            </div>
+            <!-- .row // -->
+          </div>
+          <!-- card body .// -->
+        </div>
+        
+
+        <!-- pagination -->
+        <div class="pagination-area mt-15 mb-50">
+          <nav aria-label="Page navigation example">
+              <ul class="pagination justify-content-start">
+                  <% if (currentPage > 1) { %>
+                      <li class="page-item">
+                          <a class="page-link" href="?page=<%= currentPage - 1 %>">&laquo;</a>
+                      </li>
+                  <% } %>
+      
+                  <% for (let i = 1; i <= totalPages; i++) { %>
+                      <li class="page-item <%= currentPage === i ? 'active' : '' %>">
+                          <a class="page-link" href="?page=<%= i %>"><%= i %></a>
+                      </li>
+                  <% } %>
+      
+                  <% if (currentPage < totalPages) { %>
+                      <li class="page-item">
+                          <a class="page-link" href="?page=<%= currentPage + 1 %>">&raquo;</a>
+                      </li>
+                  <% } %>
+              </ul>
+          </nav>
+      </div>
+
+
+      </section>
+      <!-- content-main end// -->
+
+      <script>
+
+        function handleFormSubmit(event){
+          event.preventDefault();
+          if(!validateForm()){
+            return
+          }
+          const name = document.getElementsByName("name")[0].value;
+          const description = document.getElementById("descriptionId").value;
+
+          fetch('/admin/addCategory',{
+            method: 'POST',
+            headers:{
+              'content-type':'application/json'
+            },
+            body:JSON.stringify({name,description})
+          })
+          .then(response => {
+            if(!response.ok){
+              return response.json().then(err => {
+                 throw new Error(err.error);
+              })
+            }
+            return response.json();
+          })
+          .then(data => {
+            location.reload();
+          })
+          .catch(error => {
+            if(error.message === "Category already exists"){
+              Swal.fire({
+                icon:'error',
+                title:"Oops",
+                text:"Category already exists"
+              })
+            } else {
+              Swal.fire({
+                icon: "error",
+                title: "oops",
+                text: "An error occured while adding the category",
+              })
+            }
+          })
+        }
+
+        function validateForm (){
+          clearErrorMessages();
+          const name = document.getElementsByName("name")[0].value.trim();
+          const description = document.getElementById("descriptionId").value.trim();
+          isValid = true;
+
+          if(name===""){
+            displayErrorMessage("name-error","Please enter a name");
+            isValid = false
+          } else if(!/^[a-zA-Z\s]+$/.test(name)) {
+            displayErrorMessage("name-error","Catefory name should contain only alphabetic characters");
+            isValid = false;
+          }
+          if(description === ""){
+            displayErrorMessage("description-error","Please enter a description");
+            isValid = false
+          }
+          return isValid;
+        }
+
+
+        function displayErrorMessage(elementId,message){
+          let errorElement = document.getElementById(elementId);
+          errorElement.innerText = message;
+          errorElement.style.display = "block";
+        }
+
+        function clearErrorMessages(){
+          const errorElements = document.getElementsByClassName("error-message");
+          Array.from(errorElements).forEach((element) => {
+            element.innerText = "";
+            element.style.display = "none";
+          });
+        }
+
+      </script>
+
+<%-include("../../views/partials/admin/footer")%>

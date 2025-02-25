@@ -40,76 +40,38 @@
                 <table class="table table-hover">
                     <thead>
                         <tr>
-                            <th>#ID</th>
+                            <th scope="col">#ID</th>
                             <th scope="col">Name</th>
                             <th scope="col">Email</th>
-                            <th scope="col">Role</th>
                             <th scope="col">Status</th>
                             <th scope="col">Joined</th>
                             <th scope="col" class="text-end">Action</th>
                         </tr>
                     </thead>
-                    <tbody>
-                        <%for(let i=0;i<data.length;i++){%>
+                    <tbody> 
+                        <% if(users.length > 0) {%>
+                            <% for(let i=0;i<users.length;i++) { %>
                         <tr>
-                            <td>1001</td>
-                            <td><b>Marvin McKinney</b></td>
-                            <td>marvin@example.com</td>
-                            <td>Admin</td>
+                            <td><%= i+1 %></td>
+                            <td><b><%= users[i].name %></b></td>
+                            <td><%= users[i].email %></td>
                             <td><span class="badge rounded-pill alert-success">Active</span></td>
                             <td>03.12.2020</td>
                             <td class="text-end">
-                                <a href="#" class="btn btn-md rounded font-sm">View Profile</a>
-                                <div class="dropdown">
-                                    <a href="#" data-bs-toggle="dropdown" class="btn btn-light rounded btn-sm font-sm"> <i class="material-icons md-more_horiz"></i> </a>
-                                    <div class="dropdown-menu">
-                                        <a class="dropdown-item" href="#">Edit User</a>
-                                        <a class="dropdown-item text-danger" href="#">Delete</a>
-                                    </div>
-                                </div>
-                                <!-- dropdown //end -->
+                                <% if(users[i].isBlocked) {%>
+
+                                    <a href="/admin/UnblockCustomer?id=<%=users[i]._id%>" class="btn btn-md rounded font-sm">Unblock</a>
+
+                                <% }else if(!users[i].isBlocked) { %>
+
+                                    <a href="/admin/blockCustomer?id=<%=users[i]._id%>" class="btn btn-md rounded font-sm">Block</a>
+
+                                <% } %>
                             </td>
                         </tr>
-                        <tr>
-                            <td>1002</td>
-                            <td><b>Leslie Alexander</b></td>
-                            <td>leslie@example.com</td>
-                            <td>Customer</td>
-                            <td><span class="badge rounded-pill alert-warning">Inactive</span></td>
-                            <td>21.02.2020</td>
-                            <td class="text-end">
-                                <a href="#" class="btn btn-md rounded font-sm">View Profile</a>
-                                <div class="dropdown">
-                                    <a href="#" data-bs-toggle="dropdown" class="btn btn-light rounded btn-sm font-sm"> <i class="material-icons md-more_horiz"></i> </a>
-                                    <div class="dropdown-menu">
-                                        <a class="dropdown-item" href="#">Edit User</a>
-                                        <a class="dropdown-item text-danger" href="#">Delete</a>
-                                    </div>
-                                </div>
-                                <!-- dropdown //end -->
-                            </td>
-                        </tr>
-                        <tr>
-                            <td>1003</td>
-                            <td><b>Esther Howard</b></td>
-                            <td>esther@example.com</td>
-                            <td>Vendor</td>
-                            <td><span class="badge rounded-pill alert-success">Active</span></td>
-                            <td>03.07.2020</td>
-                            <td class="text-end">
-                                <a href="#" class="btn btn-md rounded font-sm">View Profile</a>
-                                <div class="dropdown">
-                                    <a href="#" data-bs-toggle="dropdown" class="btn btn-light rounded btn-sm font-sm"> <i class="material-icons md-more_horiz"></i> </a>
-                                    <div class="dropdown-menu">
-                                        <a class="dropdown-item" href="#">Edit User</a>
-                                        <a class="dropdown-item text-danger" href="#">Delete</a>
-                                    </div>
-                                </div>
-                                <!-- dropdown //end -->
-                            </td>
-                        </tr>
+                        <% } %>
+                        <% } %>
                         <!-- Add more rows as needed -->
-                         <%}%>
                     </tbody>
                 </table>
             </div>
@@ -121,17 +83,27 @@
     <div class="pagination-area mt-15 mb-50">
         <nav aria-label="Page navigation example">
             <ul class="pagination justify-content-start">
-                <li class="page-item active"><a class="page-link" href="#">01</a></li>
-                <li class="page-item"><a class="page-link" href="#">02</a></li>
-                <li class="page-item"><a class="page-link" href="#">03</a></li>
-                <li class="page-item"><a class="page-link dot" href="#">...</a></li>
-                <li class="page-item"><a class="page-link" href="#">16</a></li>
-                <li class="page-item">
-                    <a class="page-link" href="#"><i class="material-icons md-chevron_right"></i></a>
-                </li>
+                <% if (currentPage > 1) { %>
+                    <li class="page-item">
+                        <a class="page-link" href="?page=<%= currentPage - 1 %>">&laquo;</a>
+                    </li>
+                <% } %>
+    
+                <% for (let i = 1; i <= totalPages; i++) { %>
+                    <li class="page-item <%= currentPage === i ? 'active' : '' %>">
+                        <a class="page-link" href="?page=<%= i %>"><%= i %></a>
+                    </li>
+                <% } %>
+    
+                <% if (currentPage < totalPages) { %>
+                    <li class="page-item">
+                        <a class="page-link" href="?page=<%= currentPage + 1 %>">&raquo;</a>
+                    </li>
+                <% } %>
             </ul>
         </nav>
     </div>
+    
 </section>
 <!-- content-main end// -->
 

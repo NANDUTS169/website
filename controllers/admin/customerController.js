@@ -11,7 +11,7 @@ const customerInfo = async (req, res) => {
         let page = parseInt(req.query.page, 10) || 1;
         console.log("Page:", page);
 
-        const limit = 3;
+        const limit = 5;
 
         const userData = await User.find({
             isAdmin: false,
@@ -34,9 +34,13 @@ const customerInfo = async (req, res) => {
             ],
         });
 
+        const totalUsers = await User.countDocuments();
+  
+        let totalPages = Math.ceil(totalUsers / limit);
+
         console.log("Total Count:", count);
 
-        res.render("customers", { users: userData, totalUsers: count, currentPage: page });
+        res.render("customers", { users: userData,totalPages, totalUsers: count, currentPage: page });
 
     } catch (error) {
         console.error("Error in customerInfo:", error);
@@ -44,7 +48,31 @@ const customerInfo = async (req, res) => {
     }
 };
 
+const customerBlocked = async (req,res) => {
+    try {
+        let id = req.query.id;
+        await User.updateOne({_id:id},{$set:{isBlocked:true}});
+        res.redirect("/admin/users")
+
+    } catch (error) {
+        res.redirect("/pageerror")
+    }
+};
+
+const customerunBlocked = async (req,res) => {
+    try {
+        let id = req.query.id;
+        await User.updateOne({_id:id},{$set:{isBlocked:false}});
+        res.redirect("/admin/users");
+
+    } catch (error) {
+        res.redirect("/pageerror");
+    }
+}
+ 
 
 module.exports = {
     customerInfo,
+    customerBlocked,
+    customerunBlocked,
 }
