@@ -51,12 +51,11 @@ const productSchema = new Schema({
         type: String,
         enum : ["Available","Out of stock","Discontinued"],
         required: true,
-        default: Available
+        // default: Available
     }
 },{timestamps: true});
 
 const Product = mongoose.model("product",productSchema)
 
-module.exports = {
-    Product,
-}
+module.exports = Product;
+

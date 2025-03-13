@@ -30,8 +30,6 @@
 // }
 
 
-
-
 const errorHandling = (req, res, next) => {
     // console.log("Original URL:", req.originalUrl); 
     // console.log("Base URL:", req.baseUrl); 
@@ -43,7 +41,7 @@ const errorHandling = (req, res, next) => {
     }
 
     // Check if the request is for an admin route
-    if (req.baseUrl.startsWith("/admin")) {
+    if (req.originalUrl.startsWith("/admin")) {
         console.log("Admin error page printed");
         return res.redirect("/admin/pageerror");
     } else {

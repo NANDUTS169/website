@@ -23,6 +23,5 @@ const brandSchema = new Schema({
 
 const Brand = mongoose.model("Brand",brandSchema);
 
-module.exports = {
-    Brand
-}
+module.exports = Brand;
+
