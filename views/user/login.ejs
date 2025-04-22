@@ -52,7 +52,7 @@ body {
 }
 
 .login-section p {
-  color: #6b6b6b;
+  color: #0070f3;
   margin-bottom: 5px;
 }
 
@@ -214,6 +214,18 @@ body {
     font-size: 12px;
   }
 }
+
+.forgot-password-link {
+  font-size: 0.875rem;
+  color: #0070f3;
+  text-decoration: none; 
+  text-align: end;
+}
+
+.forgot-password-link:hover {
+  color: #0056b3;
+  text-decoration: underline;
+}
 </style>
 
 <body>
@@ -238,11 +250,14 @@ body {
               <span id="toggle-password">👁</span>
             </div>
           </div>
+
           <%if(locals.message && message.length>0) {%>
             <div style="text-align: center; color: darkred;"><%=message%></div>
           <% } %>
-          <a href="#" class="forgot-password"><p>forgot password?</p></a>
+
+          <a href="/forgot-password" class="forgot-password-link ms-auto"><p>forgot password?</p></a>
           <button type="submit" class="continue-btn">LOGIN</button>
+
         </form>
 
         <p class="newbie">Do you have account?  <a href="/signup">GET STARTED</a></p>
