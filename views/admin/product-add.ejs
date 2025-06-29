@@ -120,7 +120,7 @@
                         </div>
                         
                         <!-- Color -->
-                        <div class="row">
+                        <!-- <div class="row">
                             <div class="col-lg-4">
                                 <div class="mb-4">
                                     <label class="form-label">Color</label>
@@ -128,7 +128,7 @@
                                     <div id="color-error" class="error-message"></div>
                                 </div>
                             </div>
-                        </div>
+                        </div> -->
                         
                         <!-- Category -->
                         <div class="card mb-4">
@@ -214,6 +214,13 @@ document.addEventListener('DOMContentLoaded', function() {
 function validateAndSubmit() {
     if (validateForm()) {
         document.getElementById('productForm').submit();
+        Swal.fire({
+            icon: "success",
+            title: "Success",
+            text: "Product added successfully",
+        }).then(() => {
+            location.reload();
+        });
     }
 }
 
@@ -318,7 +325,7 @@ function validateForm() {
     const description = document.getElementById('descriptionid').value;
     const price = document.getElementsByName('regularPrice')[0].value;
     const saleprice = document.getElementsByName('salePrice')[0].value;
-    const color = document.getElementsByName('color')[0].value;
+    // const color = document.getElementsByName('color')[0].value;
     const quantity = document.getElementsByName('quantity')[0].value;
     const images = document.getElementById('input1');
 
@@ -366,11 +373,11 @@ function validateForm() {
         }
     }
 
-    // Validate color
-    if (color.trim() === "") {
-        displayErrorMessage('color-error', 'Please enter a color.');
-        isValid = false;
-    }
+    // // Validate color
+    // if (color.trim() === "") {
+    //     displayErrorMessage('color-error', 'Please enter a color.');
+    //     isValid = false;
+    // }
 
     // Validate image
     if (!images.files || images.files.length === 0) {

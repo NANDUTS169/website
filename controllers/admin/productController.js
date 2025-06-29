@@ -9,6 +9,7 @@ const sharp = require("sharp");
 const getProductAddPage = async (req,res) => {
     console.log("Add getProductAddPage Function invoked...");
     try {
+        console.log("sdfghjkxfghjk")
         const category = await Category.find({isListed:true});
         const brand = await Brand.find({isBlocked:false});
         res.render("product-add",{
@@ -45,7 +46,7 @@ const addProducts = async (req,res) => {
             const categoryId = await Category.findOne({name:products.category});
 
             if(!categoryId){
-                return res.status(400).join("Invalid category name")
+                return res.status(400).json("Invalid category name")
             }
 
             const newProduct = new Product({
@@ -58,7 +59,7 @@ const addProducts = async (req,res) => {
                  createdOn: new Date(),
                  quantity: products.quantity,
                  size:products.size,
-                 color:products.color,
+                 color:products.color ? products.color : 'undefined',
                  productImage:images,
                  status: 'Available',
             });
@@ -100,7 +101,7 @@ const getAllProducts = async (req,res) => {
         const brand = await Brand.find({isBlocked:false});
 
         if(category && brand){
-            res.render("products",{
+            res.render("admin-products",{
                 data: productData,
                 currentPage: page,
                 totalPages: page,
@@ -149,7 +150,7 @@ const removeProductOffer = async (req,res) => {
         findProduct.salePrice = findProduct.salePrice+Math.floor(findProduct.regularPrice*(percentage/100));
         findProduct.productOffer = 0;
         await findProduct.save();
-        res.json({status:true});
+        res.json({status:true});  
 
     } catch (error) {
         console.error(error);
@@ -183,7 +184,7 @@ const unblockProduct = async (req,res) => {
 const getEditProduct = async (req,res) => {
     try {
         const id = req.query.id;
-        const product = await Product.findOne({_id:id});
+        const product = await Product.findOne({_id:id}).lean();
         const category = await Category.find({});
         const brand = await Brand.find({});
         res.render("product-edit",{
@@ -248,13 +249,13 @@ const deleteSingleImage = async (req,res) => {
     try {
         const {imageNameToServer,productIdToServer} = req.body;
         const product = await Product.findByIdAndUpdate(productIdToServer,{$pull:{productImage:imageNameToServer}});
-        const imagePath = path.join("public","uploads","re-image",imageNameToServer);
+        const imagePath = path.join("public","uploads","product-images",imageNameToServer);
         console.log(imagePath);
         if(fs.existsSync(imagePath)){
             await fs.unlinkSync(imagePath);
             console.log(`Image ${imageNameToServer} deleted successfully`);
         }else{
-            conosle.log(`Image ${imageNameToServer} not found`);
+            console.log(`Image ${imageNameToServer} not found`);
         }
         res.send({status:true});
 

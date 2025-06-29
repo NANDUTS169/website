@@ -200,37 +200,53 @@
         return false;
     }
 
-    function resendOTP () {
-        console.log('function resend otp invoked')
+    function resendOTP() {
+        console.log('function resend otp invoked');
         clearInterval(timerInterval);
-        time = 60;
-        document.getElementById("otp").disabled = false;
-        document.getElementById("timerValue").classList.remove("expired");
-        startTimer();
+
+        // ✅ Reset the timer correctly
+        timer = 60;
+        document.getElementById("timerValue").textContent = timer;
+
+        // ✅ Remove expired styles and enable input again
+        const timerValueEl = document.getElementById("timerValue");
+        const otpInput = document.getElementById("otp");
+        
+        timerValueEl.classList.remove("expired");
+        otpInput.disabled = false;
+
+        startTimer(); // ✅ Restart the timer visually
+
+        // ✅ Resend OTP to server
         $.ajax({
             type: "POST",
             url: "resendotp",
             success: function (response) {
-                if(response.success) {
-
+                if (response.success) {
                     Swal.fire({
                         icon: "success",
-                        title: "OTP Resend Successfully",
+                        title: "OTP Resent Successfully",
                         showConfirmButton: false,
                         timer: 1500,
-                    })
-
-                }else {
+                    });
+                } else {
                     Swal.fire({
                         icon: "error",
                         title: "Error",
-                        text: "An error occured while resending OTP. Please try again",
-                    })
+                        text: "An error occurred while resending OTP. Please try again",
+                    });
                 }
+            },
+            error: function () {
+                Swal.fire({
+                    icon: "error",
+                    title: "Server Error",
+                    text: "Could not resend OTP. Try again later.",
+                });
             }
-        })
-        return false;
+        });
     }
+
 
 </script>
 <%- include("../../views/partials/user/footer") %>

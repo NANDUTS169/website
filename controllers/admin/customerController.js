@@ -25,8 +25,6 @@ const customerInfo = async (req, res) => {
         .skip((page - 1) * limit)
         .exec();
 
-        console.log("User Data:", userData);
-
         const count = await User.countDocuments({
             isAdmin: false,
             $or: [
@@ -39,7 +37,6 @@ const customerInfo = async (req, res) => {
   
         let totalPages = Math.ceil(totalUsers / limit);
 
-        console.log("Total Count:", count);
 
         res.render("customers", { users: userData,totalPages, totalUsers: count, currentPage: page });
 

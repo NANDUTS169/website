@@ -1,4 +1,6 @@
 const User = require("../../models/userSchema");
+const Category = require("../../models/categorySchema");
+const Product = require("../../models/productSchema");
 const nodemailer = require('nodemailer');
 const env = require('dotenv').config();
 const otpGenerator = require('otp-generator');
@@ -8,15 +10,25 @@ const { response } = require("express");
 const loadHomepage = async(req,res) => {
     try {
         const user = req.session.user;
+        const categories = await Category.find({isListed:true});
+        let productData = await Product.find(
+            {isBlocked:false,
+                category:{$in:categories.map(category=>category._id)},quantity:{$gt:0}
+            }
+        )
+
+        productData.sort((a,b) => new Date(b.createdOn) - new Date (a.createdOn));
+        productData = productData.slice(0,4);
+         
+        console.log(productData)
+
         console.log(user)
         if(user){
             const userData = await User.findOne({_id:user});
-            console.log(userData);
-            res.render("home",{user:userData})
+            return res.render("home",{user:userData,products:productData});
         }else{
-            return res.render('home');
+            return res.render('home',{products:productData});
         }
-        
     } catch (error) {
         console.log("Home page not found");
         res.status(500).send("Server error")
@@ -157,6 +169,7 @@ const signup = async(req,res) => {
 const loadLogin = async(req,res) => {
     console.log("funtion invoked... - loadLogin")
     try {
+        console.log("Req session :- ",req.session)
         if(!req.session.user){
             return res.render("login")
         }else{

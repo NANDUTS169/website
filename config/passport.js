@@ -15,6 +15,8 @@ passport.use(
       console.log("Google profile:", profile); // Debugging: Log the entire profile
       try {
         let user = await User.findOne({ googleId: profile.id });
+        console.log(user);
+        
 
         if (user) {
           return done(null, user); // User already exists, return the user
