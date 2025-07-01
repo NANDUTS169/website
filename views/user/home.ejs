@@ -121,8 +121,8 @@
     <div class="col-lg-3 col-md-4 col-sm-6 mb-4 text-center d-flex">
       <div class="product-entry border position-relative w-100">
         <!-- Product Image -->
-        <a href="/productDetails?id=<%= products[i]._id %>" class="prod-img d-block">
-          <img src="/uploads/re-image/<%= products[i].productImage[0] %>" class="img-fluid" alt="<%= products[i].productName %>">
+		 <a href="/productdetails/<%= products[i]._id %>" class="prod-img d-block">
+          <img src="/uploads/product-images/<%= products[i].productImage[0] %>" class="img-fluid" alt="<%= products[i].productName %>">
         </a>
 
         <!-- Wishlist Button -->
@@ -144,9 +144,7 @@
     </div>
   <% } %>
 </div>
-
-					
-				</div>
+			</div>
 				<div class="row">
 					<div class="col-md-12 text-center">
 						<p><a href="#" class="btn btn-primary btn-lg">Shop All Products</a></p>

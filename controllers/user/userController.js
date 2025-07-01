@@ -23,9 +23,9 @@ const loadHomepage = async(req,res) => {
         console.log(productData)
 
         console.log(user)
+        
         if(user){
-            const userData = await User.findOne({_id:user});
-            return res.render("home",{user:userData,products:productData});
+            return res.render("home",{user, products:productData});
         }else{
             return res.render('home',{products:productData});
         }
@@ -200,7 +200,12 @@ const login = async (req,res) => {
         if(!passwordMatch){
             return res.render("login",{message: "Incorrect Password"});
         }
-        req.session.user = findUser._id;
+        req.session.user = {
+            _id: findUser._id,
+            name: findUser.name,
+            email: findUser.email,
+            isLoggedIn: true,
+        };
         res.redirect("/")
 
     } catch (error) {
@@ -246,7 +251,12 @@ const verifyOtp = async (req,res) => {
             })
 
             await saveUserData.save();
-            req.session.user = saveUserData._id;
+            req.session.user = {
+                _id: saveUserData._id,
+                name: saveUserData.name,
+                email: saveUserData.email,
+                isLoggedIn: true
+            }
             res.json({success:true, redirectUrl:"/"})
 
         }else{
@@ -295,7 +305,7 @@ const logout = async(req,res) => {
                 console.log("Session destruction error",err.message);
                 return res.redirect("/pageNotFound")
             }
-            return res.redirect("/login");
+            return res.redirect("/");
         })
     } catch (error) {
         console.log("Logout error",error);

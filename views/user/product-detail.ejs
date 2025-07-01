@@ -1,3 +1,4 @@
+<body>
 <%- include("../../views/partials/user/header") %>
 
 <link href="https://fonts.googleapis.com/css?family=Montserrat:300,400,500,600,700" rel="stylesheet">
@@ -25,7 +26,18 @@
 <!-- Theme style  -->
 <link rel="stylesheet" href="/css/style.css">
 
-<body>
+<style>
+    .price-current {
+  font-weight: bold;
+  color: #000;
+  margin-left: 10px;
+}
+.price-offer {
+  color: red;
+  margin-left: 5px;
+}
+
+</style>
     <div class="colorlib-loader"></div>
 
     <div class="breadcrumbs">
@@ -47,7 +59,8 @@
                             <div class="item">
                                 <div class="product-entry border">
                                     <a href="#" class="prod-img">
-                                        <img src="/uploads/re-image/<%= image %>" class="img-fluid" alt="<%= product.productName %>">
+                                        <img src="/uploads/product-images/<%= image %>" class="img-fluid product-gallery-img" alt="<%= product.productName %>">
+
                                     </a>
                                 </div>
                             </div>
@@ -57,7 +70,9 @@
                 <div class="col-sm-4">
                     <div class="product-desc">
                         <h3><%= product.productName %></h3>
-                        <p class="price">
+
+
+                        <!-- <p class="price">
 							<span style="text-decoration: line-through;">₹<%= product.salePrice.toFixed(2) %></span>
                             <% if (product.regularPrice > product.salePrice || product.productOffer > 0) { %>
                                 <span class="price-old">₹<%= product.regularPrice.toFixed(2) %></span>
@@ -71,18 +86,31 @@
                                 <i class="icon-star-full"></i>
                                 <i class="icon-star-full"></i>
                                 <i class="icon-star-half"></i>
-                                (74 Rating) <!-- Replace with dynamic rating if available -->
+                                (74 Rating)
                             </span>
                         </p>
+
+                        <p class="price"> -->
+
+  <% if (product.regularPrice > product.salePrice || product.productOffer > 0) { %>
+    <span style="text-decoration: line-through;">₹<%= product.regularPrice.toFixed(2) %></span>
+  <% } %>
+  <span class="price-current">₹<%= product.salePrice.toFixed(2) %></span>
+  
+  <% if (product.productOffer > 0) { %>
+    <span class="price-offer">(<%= product.productOffer %>% OFF)</span>
+  <% } %>
+</p>
+
                         <p><%= product.description %></p>
                         <p><strong>Brand:</strong> <%= product.brand %></p>
                         <p><strong>Color:</strong> <%= product.color %></p>
                         <p><strong>Status:</strong> <%= product.status %></p>
-                        <div class="size-wrap">
+
+                        <!-- <div class="size-wrap">
                             <div class="block-26 mb-2">
                                 <h4>Size</h4>
                                 <ul>
-                                    <!-- Replace with dynamic sizes if available in schema -->
                                     <li><a href="#">7</a></li>
                                     <li><a href="#">7.5</a></li>
                                     <li><a href="#">8</a></li>
@@ -107,7 +135,21 @@
                                     <li><a href="#">W</a></li>
                                 </ul>
                             </div>
-                        </div>
+                        </div> -->
+
+<% if (product.sizes && product.sizes.length) { %>
+  <ul>
+    <% product.sizes.forEach(size => { %>
+      <li><a href="#"><%= size %></a></li>
+    <% }) %>
+  </ul>
+<% } else { %>
+  <ul>
+    <li><a href="#">Free Size</a></li>
+  </ul>
+<% } %>
+
+
                         <div class="input-group mb-4">
                             <span class="input-group-btn">
                                 <button type="button" class="quantity-left-minus btn" data-type="minus" data-field="">
@@ -128,6 +170,7 @@
                                 <% } else { %>
                                     <p class="addtocart"><button class="btn btn-primary btn-addtocart disabled" disabled><i class="icon-shopping-cart"></i> Unavailable</button></p>
                                 <% } %>
+
                             </div>
                         </div>
                     </div>
@@ -171,6 +214,8 @@
                                                 <div class="rating-wrap">
                                                     <h3 class="head">Give a Review</h3>
                                                     <!-- Add review form or logic here -->
+                                                     <!-- If no reviews yet -->
+                                                    <p>No reviews yet. Be the first to review this product!</p>
                                                 </div>
                                             </div>
                                         </div>
@@ -183,7 +228,6 @@
             </div>
         </div>
     </div>
-</body>
 
 <!-- jQuery and other scripts remain unchanged -->
 <script src="/js/jquery.min.js"></script>
@@ -221,3 +265,4 @@
 </script>
 
     <%- include("../../views/partials/user/footer") %>
+</body>

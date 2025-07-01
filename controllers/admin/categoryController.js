@@ -7,7 +7,7 @@ const categoryInfo = async (req, res) => {
 
     try {
         const page = parseInt(req.query.page) || 1;
-        const limit = 1;
+        const limit = 4;
         const skip = (page - 1) * limit;
 
         const categoryData = await Category.find({})
@@ -39,7 +39,10 @@ const addCategory = async (req,res) => {
 
     try {
 
-        const existingCategory = await Category.findOne({name});
+        const existingCategory = await Category.findOne({
+            name: { $regex: new RegExp("^" + name + "$", "i")}
+        });
+
         if(existingCategory){
             return res.status(400).json({error: "Category already exists"});
         }
@@ -54,7 +57,7 @@ const addCategory = async (req,res) => {
         return res.json({message:"Category added successfully"});
         
     } catch (error) {
-        console.log('error',error)
+        console.log('Add Category error',error)
         return res.status(500).json({error:"Internal Server Error"});
 
     }
@@ -296,11 +299,16 @@ const editCategory = async (req,res) => {
     try {
         const id = req.params.id;
         const {categoryName,description} = req.body;
-        const existingCategory = await Category.findOne({name:categoryName});
+        const existingCategory = await Category.findOne({
+            _id: {$ne: id},
+            name: {$regex: new RegExp("^" + categoryName + "$","i")}
+        });
 
         if(existingCategory){
-            return res.status(400).json({error: "Category exists, please choose another name"});
+            return res.redirect(`/admin/editCategory?id=${id}&error=exists`);
+            // return res.status(400).json({error: "Category exists, please choose another name"});
         }
+
 
         const updateCategory = await Category.findByIdAndUpdate(id,{
             name: categoryName,
@@ -308,17 +316,15 @@ const editCategory = async (req,res) => {
         },{new:true});
 
         if(updateCategory){
-            res.redirect("/admin/category");
+            res.redirect(`/admin/editCategory?id=${id}&updated=1`);
         }else {
             res.status(404).json({error:"Category not found"});
         }
     } catch (error) {
+        console.log("Edit Category Error:",error);
         res.status(500).json({error:"Internal server error"});
     }
-}
-
-
-
+};
 
 
 module.exports = {
@@ -330,5 +336,4 @@ module.exports = {
     getUnlistCategory,
     getEditCategory,
     editCategory,
-}
- 
+};

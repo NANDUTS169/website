@@ -5,10 +5,9 @@ const profileController = require("../controllers/user/profileController");
 const productController = require("../controllers/user/productController");
 const passport = require("../config/passport");
 const { userAuth } = require('../middlewares/auth');
-// const passport = require('passport');
+const isUserLoggedIn = require('../middlewares/sessionHandling');
 
-
-router.get("/",userAuth,userController.loadHomepage);
+router.get("/",userController.loadHomepage);
 
 // Login Management
 router.get("/login",userController.loadLogin);
@@ -44,6 +43,8 @@ router.post("/reset-password",profileController.postNewPassword);
 
 router.get("/products", productController.getUserProductList);
 router.get("/productdetails/:id",productController.getProductDetailPage);
+// router.get("/wishlist",isUserLoggedIn,userController.wishlist);
+
 
 // Error Management
 router.get("/pageNotFound",userController.pageNotFound);
