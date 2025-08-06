@@ -1,9 +1,13 @@
 const User = require("../../models/userSchema");
+const Order = require("../../models/orderSchema");
+const Address = require("../../models/addressSchema");
 const nodemailer = require("nodemailer");
 const bcrypt = require("bcrypt");
 const env = require("dotenv").config();
 const session = require("express-session"); 
 const { generate } = require("otp-generator");
+const fs = require("fs");
+const path = require('path');
 
 
 function generateOtp(){
@@ -147,6 +151,77 @@ const postNewPassword = async (req,res) => {
     }
 }
 
+const getUserProfile = async(req,res) => {
+    try {
+        console.log("Get user Profile function invoked..");
+        const userId = req.session.user;
+        const user = await User.findById(userId).lean();
+        console.log(user);
+        if(!user) return res.redirect("/login");
+
+        const addressDoc = await Address.findOne({ UserId: userId}).lean();
+        console.log("AddressDoc : ",addressDoc);
+        const addresses = addressDoc?.address || [];
+        console.log("Addresses: ",addresses);
+
+        const orders = await Order.find({address: userId})
+        .populate("orderedItems.product")
+        .sort({createdOn: -1})
+        .limit(5)
+        .lean();
+
+        res.render("userProfile",{
+            user,
+            addresses,
+            orders
+        });
+       
+    } catch (error) {
+        console.log("Error loading userProfile page",error);
+        res.redirect("/pageNotFound");
+    }
+};
+
+
+const updateUserProfile = async (req,res) => {
+    console.log("Update profile function invoked..")
+    try {
+        const userId = req.session.user;
+        const {name,email,phone,gender,birthdate} = req.body;
+
+        const user = await User.findById(userId);
+        if(!user){
+            return res.status(404).json({success:false,message:"user not found"});
+        }
+
+        user.name = name?.trim() || user.name;
+        user.email = email?.trim() || user.email;
+        user.phone = phone?.trim() || user.phone;
+        user.gender = gender || user.gender;
+        user.birthdate = birthdate || user.birthdate;
+
+        if(req.file) {
+            if(user.profileImage){
+                const oldPath = path.join(__dirname, '../../public',user.profileImage);
+                if(fs.existsSync(oldPath)) {
+                    fs.unlink(oldPath,(err) => {
+                        if(err) conosle.log("Failed to delete old profile image",error);
+                        else console.log("Old profile image deleted");
+                    });
+                }
+            }
+            user.profileImage = `/uploads/profile/${req.file.filename}`;
+        }
+        
+        await user.save();
+        res.json({success: true, message: "Profile updated Successfully",user});
+
+    } catch (error) {
+        console.error("Profile update failed:",error);
+        res.status(500).json({success:false, message: "Server error"});
+    }
+};
+
 
 module.exports = {
     getForgotPassPage,
@@ -155,4 +230,6 @@ module.exports = {
     getResetPassPage,
     resendOtp,
     postNewPassword,
+    getUserProfile,
+    updateUserProfile,
 };

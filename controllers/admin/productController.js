@@ -26,7 +26,7 @@ const addProducts = async (req,res) => {
     console.log("Add products funtion invoked...");
     try {
         const products = req.body;
-        console.log(products)
+        // console.log(products)
         const productExists = await Product.findOne({
             productName: products.productName,
         });

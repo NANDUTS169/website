@@ -243,9 +243,9 @@
 <script src="/js/jquery.stellar.min.js"></script>
 <script src="/js/main.js"></script>
 
-<script>
+<!-- <script>
     $(document).ready(function() {
-        var quantitiy = 0;
+        var quantity = 0;
         $('.quantity-right-plus').click(function(e) {
             e.preventDefault();
             var quantity = parseInt($('#quantity').val());
@@ -262,7 +262,29 @@
             }
         });
     });
+</script> -->
+
+<script>
+    $(document).ready(function () {
+        const maxQuantity = <%- product.quantity %>
+        $('.quantity-right-plus').click(function (e) {
+            e.preventDefault();
+            let quantity = parseInt($('#quantity').val()) || 0;
+            if (quantity < maxQuantity) {
+                $('#quantity').val(quantity + 1);
+            }
+        });
+
+        $('.quantity-left-minus').click(function (e) {
+            e.preventDefault();
+            let quantity = parseInt($('#quantity').val()) || 1;
+            if (quantity > 1) {
+                $('#quantity').val(quantity - 1);
+            }
+        });
+    });
 </script>
+
 
     <%- include("../../views/partials/user/footer") %>
 </body>

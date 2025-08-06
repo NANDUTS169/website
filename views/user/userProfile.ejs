@@ -1,0 +1,1029 @@
+
+<body>
+<%- include("../../views/partials/user/header") %>
+
+    <style>
+        body {
+            min-height: 100vh;
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+        }
+
+        .profile-container {
+            padding: 2rem 0;
+        }
+
+        .profile-header {
+            background: white;
+            border-radius: 15px;
+            box-shadow: 0 10px 30px rgba(0,0,0,0.1);
+            overflow: hidden;
+            margin-bottom: 2rem;
+        }
+
+        .profile-cover {
+            height: 150px;
+            background: linear-gradient(135deg, hwb(152 40% 8%) 0%, hsl(270, 11%, 82%) 100%);
+            position: relative;
+        }
+
+        .profile-image-container {
+            position: absolute;
+            bottom: -50px;
+            left: 30px;
+        }
+
+        .profile-image {
+            width: 100px;
+            height: 100px;
+            border-radius: 50%;
+            border: 4px solid white;
+            object-fit: cover;
+            cursor: pointer;
+            transition: transform 0.3s ease;
+        }
+
+        .profile-image:hover {
+            transform: scale(1.05);
+        }
+
+        .profile-info {
+            padding: 60px 30px 30px;
+        }
+
+        .profile-actions {
+            margin-top: 1rem;
+        }
+
+        .status-badge {
+            background: #28a745;
+            color: white;
+            padding: 0.25rem 0.75rem;
+            border-radius: 15px;
+            font-size: 0.8rem;
+            font-weight: 600;
+        }
+
+        .card {
+            border: none;
+            border-radius: 15px;
+            box-shadow: 0 5px 15px rgba(0,0,0,0.08);
+            margin-bottom: 1.5rem;
+            transition: transform 0.3s ease;
+        }
+
+        .card:hover {
+            transform: translateY(-2px);
+        }
+
+        .card-header {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            border-radius: 15px 15px 0 0 !important;
+            padding: 1rem 1.5rem;
+            border: none;
+        }
+
+        .address-item, .order-item {
+            background: #f8f9fa;
+            padding: 1rem;
+            border-radius: 10px;
+            margin-bottom: 1rem;
+            border-left: 4px solid #667eea;
+            transition: all 0.3s ease;
+        }
+
+        .address-item:hover, .order-item:hover {
+            background: #e9ecef;
+            transform: translateX(5px);
+        }
+
+        .order-status {
+            padding: 0.25rem 0.75rem;
+            border-radius: 15px;
+            font-size: 0.8rem;
+            font-weight: 600;
+        }
+
+        .status-delivered { background-color: #d4edda; color: #155724; }
+        .status-pending { background-color: #fff3cd; color: #856404; }
+        .status-shipped { background-color: #d1ecf1; color: #0c5460; }
+        .status-cancelled { background-color: #f8d7da; color: #721c24; }
+
+        .btn-gradient {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            border: none;
+            color: white;
+            transition: all 0.3s ease;
+        }
+
+        .btn-gradient:hover {
+            background: linear-gradient(135deg, #5a6fd8 0%, #6a4190 100%);
+            transform: translateY(-2px);
+            box-shadow: 0 5px 15px rgba(0,0,0,0.3);
+            color: white;
+        }
+
+        .modal-content {
+            border-radius: 15px;
+            border: none;
+        }
+
+        .modal-header {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            border-radius: 15px 15px 0 0;
+            border: none;
+        }
+
+        .form-control:focus {
+            border-color: #667eea;
+            box-shadow: 0 0 0 0.2rem rgba(102, 126, 234, 0.25);
+        }
+
+        .otp-container {
+            background: #e3f2fd;
+            padding: 1rem;
+            border-radius: 10px;
+            margin-top: 1rem;
+            display: none;
+        }
+
+        .otp-inputs {
+            display: flex;
+            gap: 0.5rem;
+            justify-content: center;
+            margin: 1rem 0;
+        }
+
+        .otp-input {
+            width: 50px;
+            height: 50px;
+            text-align: center;
+            font-size: 1.2rem;
+            font-weight: bold;
+            border: 2px solid #ddd;
+            border-radius: 8px;
+            transition: border-color 0.3s ease;
+        }
+
+        .otp-input:focus {
+            border-color: #667eea;
+            box-shadow: 0 0 0 0.2rem rgba(102, 126, 234, 0.25);
+        }
+
+        .notification {
+            position: fixed;
+            top: 20px;
+            right: 20px;
+            padding: 1rem 1.5rem;
+            border-radius: 10px;
+            color: white;
+            font-weight: 600;
+            z-index: 10000;
+            animation: slideInRight 0.3s ease;
+            max-width: 350px;
+        }
+
+        .notification.success { background: #28a745; }
+        .notification.error { background: #dc3545; }
+        .notification.info { background: #17a2b8; }
+
+        @keyframes slideInRight {
+            from {
+                transform: translateX(100%);
+                opacity: 0;
+            }
+            to {
+                transform: translateX(0);
+                opacity: 1;
+            }
+        }
+
+        @keyframes slideOutRight {
+            from {
+                transform: translateX(0);
+                opacity: 1;
+            }
+            to {
+                transform: translateX(100%);
+                opacity: 0;
+            }
+        }
+
+        .empty-state {
+            text-align: center;
+            padding: 3rem;
+            color: #6c757d;
+        }
+
+        .empty-state i {
+            font-size: 3rem;
+            margin-bottom: 1rem;
+            opacity: 0.5;
+        }
+
+        @media (max-width: 768px) {
+            .profile-info {
+                padding: 60px 15px 15px;
+            }
+            
+            .profile-image-container {
+                left: 15px;
+            }
+            
+            .profile-actions .btn {
+                margin-bottom: 0.5rem;
+            }
+        }
+    </style>
+
+    <div class="container profile-container">
+        <!-- Profile Header -->
+        <div class="profile-header">
+            <div class="profile-cover">
+                <div class="profile-image-container">
+                    <img src="<%= user.profileImage ? user.profileImage : ('https://ui-avatars.com/api/?name=' + encodeURIComponent(user.name || 'User') + '&background=667eea&color=ffffff&size=100') %>" 
+                         alt="Profile Picture" 
+                         class="profile-image" 
+                         id="profileImage" 
+                         data-bs-toggle="tooltip" 
+                         title="Click to change profile picture">
+                </div>
+            </div>
+            
+            <!-- profile Modal -->
+            <div class="profile-info">
+    <div class="row">
+        <div class="col-md-8">
+            <h2 class="mb-2" id="userName"><%= user.name %></h2>
+            <p class="mb-1"><i class="fas fa-envelope me-2"></i><span id="userEmail"><%= user.email %></span></p>
+            <p class="mb-1"><i class="fas fa-phone me-2"></i><span id="userPhone"><%= user.phone || 'Not Provided' %></span></p>
+            <p class="mb-2"><i class="fas fa-calendar me-2"></i>Member since 
+                <span id="memberSince">
+                    <%= user.createdAt ? user.createdAt.toDateString() : user.CreatedOn?.toDateString() || 'Unknown' %>
+                </span>
+            </p>
+            <span class="status-badge">
+                <i class="fas fa-check-circle me-1"></i>
+                <%= user.isBlocked ? "Blocked" : "Verified Account" %>
+            </span>
+        </div>
+        <div class="col-md-4">
+            <div class="profile-actions d-flex flex-column gap-2">
+                <button class="btn btn-gradient" data-bs-toggle="modal" data-bs-target="#editProfileModal">
+                    <i class="fas fa-edit me-2"></i>Edit Profile
+                </button>
+                <button class="btn btn-outline-primary" data-bs-toggle="modal" data-bs-target="#changePasswordModal">
+                    <i class="fas fa-key me-2"></i>Change Password
+                </button>
+                <button class="btn btn-outline-secondary" data-bs-toggle="modal" data-bs-target="#forgotPasswordModal">
+                    <i class="fas fa-question-circle me-2"></i>Forgot Password
+                </button>
+            </div>
+        </div>
+    </div>
+</div>
+
+        </div>
+
+        <div class="row">
+            <!-- Addresses Section -->
+            <div class="col-lg-6">
+                <div class="card">
+                    <div class="card-header">
+                        <h5 class="mb-0"><i class="fas fa-map-marker-alt me-2"></i>My Addresses</h5>
+                    </div>
+                    <div class="card-body">
+                        <div id="addressList">
+                            <div class="address-item">
+                                <div class="d-flex justify-content-between align-items-start">
+                                    <div>
+                                        <h6 class="mb-1"><i class="fas fa-home me-2"></i>Home Address</h6>
+                                        <p class="mb-0">123 Main Street<br>
+                                        New York, NY 10001<br>
+                                        United States</p>
+                                    </div>
+                                    <div class="dropdown">
+                                        <button class="btn btn-link btn-sm" data-bs-toggle="dropdown">
+                                            <i class="fas fa-ellipsis-v"></i>
+                                        </button>
+                                        <ul class="dropdown-menu">
+                                            <li><a class="dropdown-item" href="#"><i class="fas fa-edit me-2"></i>Edit</a></li>
+                                            <li><a class="dropdown-item text-danger" href="#"><i class="fas fa-trash me-2"></i>Delete</a></li>
+                                        </ul>
+                                    </div>
+                                </div>
+                            </div>
+                            <div class="address-item">
+                                <div class="d-flex justify-content-between align-items-start">
+                                    <div>
+                                        <h6 class="mb-1"><i class="fas fa-building me-2"></i>Work Address</h6>
+                                        <p class="mb-0">456 Business Avenue<br>
+                                        New York, NY 10002<br>
+                                        United States</p>
+                                    </div>
+                                    <div class="dropdown">
+                                        <button class="btn btn-link btn-sm" data-bs-toggle="dropdown">
+                                            <i class="fas fa-ellipsis-v"></i>
+                                        </button>
+                                        <ul class="dropdown-menu">
+                                            <li><a class="dropdown-item" href="#"><i class="fas fa-edit me-2"></i>Edit</a></li>
+                                            <li><a class="dropdown-item text-danger" href="#"><i class="fas fa-trash me-2"></i>Delete</a></li>
+                                        </ul>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                        <button class="btn btn-outline-primary w-100 mt-3" onclick="addNewAddress()">
+                            <i class="fas fa-plus me-2"></i>Add New Address
+                        </button>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Orders Section -->
+            <div class="col-lg-6">
+                <div class="card">
+                    <div class="card-header">
+                        <h5 class="mb-0"><i class="fas fa-shopping-bag me-2"></i>Recent Orders</h5>
+                    </div>
+                    <div class="card-body">
+                        <div id="ordersList">
+                            <div class="order-item" data-order-id="12345">
+                                <div class="d-flex justify-content-between align-items-center">
+                                    <div>
+                                        <h6 class="mb-1">Order #12345</h6>
+                                        <p class="mb-1 text-muted">Wireless Headphones, Smartphone Case</p>
+                                        <small class="text-muted">
+                                            <i class="fas fa-calendar me-1"></i>Placed on: Dec 15, 2024 | 
+                                            <i class="fas fa-dollar-sign me-1"></i>$129.99
+                                        </small>
+                                    </div>
+                                    <div class="text-end">
+                                        <span class="order-status status-delivered">Delivered</span>
+                                        <div class="mt-2">
+                                            <button class="btn btn-sm btn-outline-primary">Track</button>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+
+                            <div class="order-item" data-order-id="12346">
+                                <div class="d-flex justify-content-between align-items-center">
+                                    <div>
+                                        <h6 class="mb-1">Order #12346</h6>
+                                        <p class="mb-1 text-muted">Laptop Stand, USB Cable</p>
+                                        <small class="text-muted">
+                                            <i class="fas fa-calendar me-1"></i>Placed on: Dec 20, 2024 | 
+                                            <i class="fas fa-dollar-sign me-1"></i>$89.50
+                                        </small>
+                                    </div>
+                                    <div class="text-end">
+                                        <span class="order-status status-pending">Pending</span>
+                                        <div class="mt-2">
+                                            <button class="btn btn-sm btn-outline-danger" onclick="cancelOrder('12346')">Cancel</button>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+
+                            <div class="order-item" data-order-id="12347">
+                                <div class="d-flex justify-content-between align-items-center">
+                                    <div>
+                                        <h6 class="mb-1">Order #12347</h6>
+                                        <p class="mb-1 text-muted">Gaming Mouse, Keyboard</p>
+                                        <small class="text-muted">
+                                            <i class="fas fa-calendar me-1"></i>Placed on: Dec 22, 2024 | 
+                                            <i class="fas fa-dollar-sign me-1"></i>$156.00
+                                        </small>
+                                    </div>
+                                    <div class="text-end">
+                                        <span class="order-status status-shipped">Shipped</span>
+                                        <div class="mt-2">
+                                            <button class="btn btn-sm btn-outline-primary">Track</button>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="text-center mt-3">
+                            <a href="#" class="btn btn-outline-secondary">View All Orders</a>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Edit Profile Modal -->
+    <div class="modal fade" id="editProfileModal" tabindex="-1">
+        <div class="modal-dialog modal-lg">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h5 class="modal-title"><i class="fas fa-user-edit me-2"></i>Edit Profile</h5>
+                    <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"></button>
+                </div>
+                <div class="modal-body">
+                    <form id="editProfileForm" enctype="multipart/form-data">
+                        <div class="row">
+                            <div class="col-md-6">
+                                <div class="mb-3">
+                                    <label for="editName" class="form-label">Full Name</label>
+                                    <input type="text" class="form-control" id="editName" value="<%= user.name %>" required>
+                                </div>
+                            </div>
+                            <div class="col-md-6">
+                                <div class="mb-3">
+                                    <label for="editPhone" class="form-label">Phone Number</label>
+                                    <input type="tel" class="form-control" id="editPhone" value="<%= user.phone %>" required>
+                                </div>
+                            </div>
+                        </div>
+                        
+                        <div class="mb-3">
+                            <label for="editEmail" class="form-label">Email Address</label>
+                            <input type="email" class="form-control" id="editEmail" value="<%= user.email %>" required>
+                            <div class="otp-container" id="emailOtpContainer">
+                                <div class="alert alert-info mb-3">
+                                    <i class="fas fa-info-circle me-2"></i>
+                                    We've sent a verification code to your new email address. Please enter it below to confirm the change.
+                                </div>
+                                <div class="otp-inputs" id="otpInputs">
+                                    <input type="text" class="form-control otp-input" maxlength="1" data-index="0">
+                                    <input type="text" class="form-control otp-input" maxlength="1" data-index="1">
+                                    <input type="text" class="form-control otp-input" maxlength="1" data-index="2">
+                                    <input type="text" class="form-control otp-input" maxlength="1" data-index="3">
+                                    <input type="text" class="form-control otp-input" maxlength="1" data-index="4">
+                                    <input type="text" class="form-control otp-input" maxlength="1" data-index="5">
+                                </div>
+                                <div class="text-center">
+                                    <button type="button" class="btn btn-link" onclick="resendOTP()">
+                                        <i class="fas fa-redo me-1"></i>Resend Code
+                                    </button>
+                                </div>
+                            </div>
+                        </div>
+
+                        <div class="mb-3">
+                            <label for="profileImageUpload" class="form-label">Profile Picture</label>
+                            <input type="file" class="form-control" id="profileImageUpload" accept="image/*">
+                            <div class="form-text">Recommended size: 400x400px. Max file size: 2MB.</div>
+                        </div>
+
+                        <div class="row">
+                            <div class="col-md-6">
+                                <div class="mb-3">
+                                    <label for="editBirthdate" class="form-label">Date of Birth</label>
+                                    <input type="date" class="form-control" id="editBirthdate" value="<%= user.birthdate ? user.birthdate.toISOString().split('T')[0] : '' %>">
+
+                                </div>
+                            </div>
+                            <div class="col-md-6">
+                                <div class="mb-3">
+                                    <label for="editGender" class="form-label">Gender</label>
+                                    <select class="form-select" id="editGender">
+                                        <option value="">Select Gender</option>
+                                        <option value="male" <%= user.gender === 'male' ? 'selected' : '' %>>Male</option>
+                                        <option value="female" <%= user.gender === 'female' ? 'selected' : '' %>>Female</option>
+                                        <option value="other" <%= user.gender === 'other' ? 'selected' : '' %>>Other</option>
+                                        <option value="prefer-not-to-say" <%= user.gender === 'prefer-not-to-say' ? 'selected' : '' %>>Prefer not to say</option>
+                                    </select>
+                                </div>
+                            </div>
+                        </div>
+                    </form>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>
+                    <button type="button" class="btn btn-gradient" onclick="saveProfile()">
+                        <i class="fas fa-save me-2"></i>Save Changes
+                    </button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Change Password Modal -->
+    <div class="modal fade" id="changePasswordModal" tabindex="-1">
+        <div class="modal-dialog">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h5 class="modal-title"><i class="fas fa-key me-2"></i>Change Password</h5>
+                    <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"></button>
+                </div>
+                <div class="modal-body">
+                    <form id="changePasswordForm">
+                        <div class="mb-3">
+                            <label for="currentPassword" class="form-label">Current Password</label>
+                            <div class="input-group">
+                                <input type="password" class="form-control" id="currentPassword" required>
+                                <button class="btn btn-outline-secondary" type="button" onclick="togglePassword('currentPassword')">
+                                    <i class="fas fa-eye" id="currentPasswordIcon"></i>
+                                </button>
+                            </div>
+                        </div>
+                        <div class="mb-3">
+                            <label for="newPassword" class="form-label">New Password</label>
+                            <div class="input-group">
+                                <input type="password" class="form-control" id="newPassword" required>
+                                <button class="btn btn-outline-secondary" type="button" onclick="togglePassword('newPassword')">
+                                    <i class="fas fa-eye" id="newPasswordIcon"></i>
+                                </button>
+                            </div>
+                            <div class="form-text">Password must be at least 8 characters long and contain uppercase, lowercase, number, and special character.</div>
+                        </div>
+                        <div class="mb-3">
+                            <label for="confirmPassword" class="form-label">Confirm New Password</label>
+                            <div class="input-group">
+                                <input type="password" class="form-control" id="confirmPassword" required>
+                                <button class="btn btn-outline-secondary" type="button" onclick="togglePassword('confirmPassword')">
+                                    <i class="fas fa-eye" id="confirmPasswordIcon"></i>
+                                </button>
+                            </div>
+                        </div>
+                        <div id="passwordStrength" class="mb-3"></div>
+                    </form>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>
+                    <button type="button" class="btn btn-gradient" onclick="changePassword()">
+                        <i class="fas fa-save me-2"></i>Change Password
+                    </button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Forgot Password Modal -->
+    <div class="modal fade" id="forgotPasswordModal" tabindex="-1">
+        <div class="modal-dialog">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h5 class="modal-title"><i class="fas fa-question-circle me-2"></i>Forgot Password</h5>
+                    <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"></button>
+                </div>
+                <div class="modal-body">
+                    <div class="text-center mb-4">
+                        <i class="fas fa-lock fa-3x text-muted mb-3"></i>
+                        <p>Enter your email address and we'll send you a link to reset your password.</p>
+                    </div>
+                    <form id="forgotPasswordForm">
+                        <div class="mb-3">
+                            <label for="forgotEmail" class="form-label">Email Address</label>
+                            <input type="email" class="form-control" id="forgotEmail" required>
+                        </div>
+                    </form>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>
+                    <button type="button" class="btn btn-gradient" onclick="sendResetLink()">
+                        <i class="fas fa-paper-plane me-2"></i>Send Reset Link
+                    </button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Bootstrap JS -->
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/bootstrap/5.3.2/js/bootstrap.bundle.min.js"></script>
+    
+    <script>
+
+        let userData = {
+        name: "<%= user.name %>",
+        email: "<%= user.email %>",
+        phone: "<%= user.phone %>",
+        profileImage: "<%= user.profileImage || 'https://via.placeholder.com/100/667eea/ffffff?text=' + (user.name ? user.name.charAt(0) : 'U') %>",
+        memberSince: "<%= new Date(user.createdAt).toLocaleString('default', { month: 'long', year: 'numeric' }) %>"
+        };
+        let originalEmail = userData.email;
+        let emailVerified = true;
+        let otpSent = false;
+
+        // Initialize tooltips
+        document.addEventListener('DOMContentLoaded', function() {
+            var tooltipTriggerList = [].slice.call(document.querySelectorAll('[data-bs-toggle="tooltip"]'));
+            var tooltipList = tooltipTriggerList.map(function (tooltipTriggerEl) {
+                return new bootstrap.Tooltip(tooltipTriggerEl);
+            });
+        });
+
+        // Profile image upload handling
+        document.getElementById('profileImageUpload').addEventListener('change', function(e) {
+            const file = e.target.files[0];
+            if (file) {
+                if (file.size > 2 * 1024 * 1024) { // 2MB limit
+                    showNotification('File size must be less than 2MB', 'error');
+                    return;
+                }
+                
+                const reader = new FileReader();
+                reader.onload = function(e) {
+                    document.getElementById('profileImage').src = e.target.result;
+                    userData.profileImage = e.target.result;
+                };
+                reader.readAsDataURL(file);
+            }
+        });
+
+        
+        // Email change detection
+        document.getElementById('editEmail').addEventListener('input', function() {
+            const newEmail = this.value.trim();
+            const otpContainer = document.getElementById('emailOtpContainer');
+            
+            if (newEmail !== originalEmail && newEmail.includes('@') && newEmail.includes('.')) {
+                if (!otpSent) {
+                    otpContainer.style.display = 'block';
+                    emailVerified = false;
+                    sendEmailOTP(newEmail);
+                    otpSent = true;
+                }
+            } else {
+                otpContainer.style.display = 'none';
+                emailVerified = true;
+                otpSent = false;
+            }
+        });
+
+
+        // OTP input handling
+
+
+        document.querySelectorAll('.otp-input').forEach((input, index) => {
+            input.addEventListener('input', function(e) {
+                if (this.value.length === 1) {
+                    if (index < 5) {
+                        document.querySelectorAll('.otp-input')[index + 1].focus();
+                    }
+                    checkOTPComplete();
+                }
+            });
+
+            input.addEventListener('keydown', function(e) {
+                if (e.key === 'Backspace' && this.value === '' && index > 0) {
+                    document.querySelectorAll('.otp-input')[index - 1].focus();
+                }
+            });
+        });
+
+        function checkOTPComplete() {
+            const otpValues = Array.from(document.querySelectorAll('.otp-input')).map(input => input.value);
+            if (otpValues.every(val => val.length === 1)) {
+                verifyOTP(otpValues.join(''));
+            }
+        }
+
+        function sendEmailOTP(email) {
+            // Simulate sending OTP
+            console.log(`Sending OTP to ${email}`);
+            showNotification(`Verification code sent to ${email}`, 'info');
+        }
+
+        function verifyOTP(otp) {
+            // Simulate OTP verification (in real app, this would be an API call)
+            if (otp === '123456') {
+                emailVerified = true;
+                showNotification('Email verified successfully!', 'success');
+                document.getElementById('emailOtpContainer').style.display = 'none';
+            } else {
+                showNotification('Invalid verification code. Please try again.', 'error');
+                // Clear OTP inputs
+                document.querySelectorAll('.otp-input').forEach(input => input.value = '');
+                document.querySelectorAll('.otp-input')[0].focus();
+            }
+        }
+
+        function resendOTP() {
+            const email = document.getElementById('editEmail').value;
+            sendEmailOTP(email);
+        }
+
+        // Password visibility toggle
+        function togglePassword(fieldId) {
+            const field = document.getElementById(fieldId);
+            const icon = document.getElementById(fieldId + 'Icon');
+            
+            if (field.type === 'password') {
+                field.type = 'text';
+                icon.classList.remove('fa-eye');
+                icon.classList.add('fa-eye-slash');
+            } else {
+                field.type = 'password';
+                icon.classList.remove('fa-eye-slash');
+                icon.classList.add('fa-eye');
+            }
+        }
+
+        // Password strength checker
+        document.getElementById('newPassword').addEventListener('input', function() {
+            const password = this.value;
+            const strengthDiv = document.getElementById('passwordStrength');
+            
+            let strength = 0;
+            let feedback = [];
+            
+            if (password.length >= 8) strength++;
+            else feedback.push('At least 8 characters');
+            
+            if (/[A-Z]/.test(password)) strength++;
+            else feedback.push('One uppercase letter');
+            
+            if (/[a-z]/.test(password)) strength++;
+            else feedback.push('One lowercase letter');
+            
+            if (/\d/.test(password)) strength++;
+            else feedback.push('One number');
+            
+            if (/[!@#$%^&*(),.?":{}|<>]/.test(password)) strength++;
+            else feedback.push('One special character');
+            
+            let strengthText = '';
+            let strengthClass = '';
+            
+            switch(strength) {
+                case 0-1:
+                    strengthText = 'Very Weak';
+                    strengthClass = 'text-danger';
+                    break;
+                case 2:
+                    strengthText = 'Weak';
+                    strengthClass = 'text-warning';
+                    break;
+                case 3:
+                    strengthText = 'Fair';
+                    strengthClass = 'text-info';
+                    break;
+                case 4:
+                    strengthText = 'Good';
+                    strengthClass = 'text-primary';
+                    break;
+                case 5:
+                    strengthText = 'Strong';
+                    strengthClass = 'text-success';
+                    break;
+            }
+            
+            if (password) {
+                strengthDiv.innerHTML = `
+                    <div class="d-flex justify-content-between">
+                        <span>Password Strength: <span class="${strengthClass}">${strengthText}</span></span>
+                        <div class="progress flex-grow-1 ms-3" style="height: 8px;">
+                            <div class="progress-bar ${strengthClass.replace('text-', 'bg-')}" 
+                                 style="width: ${(strength/5)*100}%"></div>
+                        </div>
+                    </div>
+                    ${feedback.length > 0 ? '<small class="text-muted">Missing: ' + feedback.join(', ') + '</small>' : ''}
+                `;
+            } else {
+                strengthDiv.innerHTML = '';
+            }
+        });
+
+        // Save profile function
+        async function saveProfile() {
+            console.log("save profile function invoked in update profile..");
+            if (!emailVerified) {
+                showNotification('Please verify your email address before saving changes.', 'error');
+                return;
+            }
+            
+            const form = document.getElementById('editProfileForm');
+            const formData = new FormData(form);
+
+            formData.append("name",document.getElementById("editName").value.trim());
+            formData.append("email",document.getElementById("editEmail").value.trim());
+            formData.append("phone",document.getElementById("editPhone").value.trim());
+            formData.append("birthdate",document.getElementById("editBirthdate").value);
+            formData.append("gender",document.getElementById("editGender").value);
+            
+            const profileImageFile = document.getElementById("profileImageUpload").files[0];
+            if(profileImageFile){
+                formData.append("profileImage",profileImageFile);
+            }
+            
+            try {
+                const response = await fetch("/update-profile",{
+                    method: "POST",
+                    body: formData,
+                });
+
+                const result = await response.json();
+
+                if(response.ok){
+                    showNotification("Profile Updated Successfully..!", "success");
+
+                    document.getElementById('userName').textContent = formData.get("name");
+                    document.getElementById("userEmail").textContent = formData.get("email");
+                    document.getElementById("userPhone").textContent = formData.get('phone');
+
+                    const modal = bootstrap.Modal.getInstance(document.getElementById("editProfileModal"));
+                    modal.hide();
+                } else {
+                    showNotification(result.message || "Failed to update profile.", "error");
+                }
+            } catch (error) {
+                console.log("Error updating profile: ",error);
+                showNotification("Server error. Please try again later.","error");
+            }
+        }
+
+        // Change password function
+        function changePassword() {
+            const currentPassword = document.getElementById('currentPassword').value;
+            const newPassword = document.getElementById('newPassword').value;
+            const confirmPassword = document.getElementById('confirmPassword').value;
+            
+            if (!currentPassword || !newPassword || !confirmPassword) {
+                showNotification('Please fill in all password fields.', 'error');
+                return;
+            }
+            
+            if (newPassword !== confirmPassword) {
+                showNotification('New passwords do not match!', 'error');
+                return;
+            }
+            
+            if (newPassword.length < 8) {
+                showNotification('Password must be at least 8 characters long!', 'error');
+                return;
+            }
+            
+            // Password strength validation
+            const hasUpper = /[A-Z]/.test(newPassword);
+            const hasLower = /[a-z]/.test(newPassword);
+            const hasNumber = /\d/.test(newPassword);
+            const hasSpecial = /[!@#$%^&*(),.?":{}|<>]/.test(newPassword);
+            
+            if (!hasUpper || !hasLower || !hasNumber || !hasSpecial) {
+                showNotification('Password must contain uppercase, lowercase, number, and special character!', 'error');
+                return;
+            }
+            
+            // Simulate password change API call
+            setTimeout(() => {
+                const modal = bootstrap.Modal.getInstance(document.getElementById('changePasswordModal'));
+                modal.hide();
+                
+                // Clear form
+                document.getElementById('changePasswordForm').reset();
+                document.getElementById('passwordStrength').innerHTML = '';
+                
+                showNotification('Password changed successfully!', 'success');
+            }, 1000);
+        }
+
+        // Send reset link function
+        function sendResetLink() {
+            const email = document.getElementById('forgotEmail').value.trim();
+            
+            if (!email) {
+                showNotification('Please enter your email address.', 'error');
+                return;
+            }
+            
+            if (!email.includes('@') || !email.includes('.')) {
+                showNotification('Please enter a valid email address.', 'error');
+                return;
+            }
+            
+            // Simulate sending reset link
+            setTimeout(() => {
+                const modal = bootstrap.Modal.getInstance(document.getElementById('forgotPasswordModal'));
+                modal.hide();
+                
+                document.getElementById('forgotPasswordForm').reset();
+                showNotification(`Password reset link sent to ${email}`, 'success');
+            }, 1000);
+        }
+
+        // Cancel order function
+        function cancelOrder(orderId) {
+            const confirmModal = new bootstrap.Modal(document.createElement('div'));
+            
+            if (confirm('Are you sure you want to cancel this order? This action cannot be undone.')) {
+                // Find the order element
+                const orderElement = document.querySelector(`[data-order-id="${orderId}"]`);
+                if (orderElement) {
+                    // Update order status
+                    const statusElement = orderElement.querySelector('.order-status');
+                    statusElement.textContent = 'Cancelled';
+                    statusElement.className = 'order-status status-cancelled';
+                    
+                    // Remove cancel button and add refund info
+                    const buttonContainer = orderElement.querySelector('.text-end');
+                    buttonContainer.innerHTML = `
+                        <span class="order-status status-cancelled">Cancelled</span>
+                        <div class="mt-2">
+                            <small class="text-muted">Refund processed in 3-5 days</small>
+                        </div>
+                    `;
+                    
+                    showNotification(`Order #${orderId} has been cancelled successfully. Refund will be processed in 3-5 business days.`, 'success');
+                }
+            }
+        }
+
+        // Add new address function
+        function addNewAddress() {
+            const addressHtml = `
+                <div class="address-item">
+                    <div class="d-flex justify-content-between align-items-start">
+                        <div>
+                            <h6 class="mb-1"><i class="fas fa-map-marker-alt me-2"></i>New Address</h6>
+                            <p class="mb-0 text-muted">Click the edit button to add address details</p>
+                        </div>
+                        <div class="dropdown">
+                            <button class="btn btn-link btn-sm" data-bs-toggle="dropdown">
+                                <i class="fas fa-ellipsis-v"></i>
+                            </button>
+                            <ul class="dropdown-menu">
+                                <li><a class="dropdown-item" href="#"><i class="fas fa-edit me-2"></i>Edit</a></li>
+                                <li><a class="dropdown-item text-danger" href="#"><i class="fas fa-trash me-2"></i>Delete</a></li>
+                            </ul>
+                        </div>
+                    </div>
+                </div>
+            `;
+            
+            document.getElementById('addressList').insertAdjacentHTML('beforeend', addressHtml);
+            showNotification('New address added! Click edit to add details.', 'success');
+        }
+
+        // Notification system
+        function showNotification(message, type = 'info') {
+            const notification = document.createElement('div');
+            notification.className = `notification ${type}`;
+            notification.innerHTML = `
+                <div class="d-flex align-items-center">
+                    <i class="fas ${type === 'success' ? 'fa-check-circle' : type === 'error' ? 'fa-exclamation-circle' : 'fa-info-circle'} me-2"></i>
+                    <span>${message}</span>
+                </div>
+            `;
+            
+            document.body.appendChild(notification);
+            
+            // Auto remove after 4 seconds
+            setTimeout(() => {
+                notification.style.animation = 'slideOutRight 0.3s ease';
+                setTimeout(() => {
+                    if (notification.parentNode) {
+                        notification.parentNode.removeChild(notification);
+                    }
+                }, 300);
+            }, 4000);
+        }
+
+        // Clear modal forms when closed
+        document.addEventListener('hidden.bs.modal', function (e) {
+            const modal = e.target;
+            const forms = modal.querySelectorAll('form');
+            forms.forEach(form => {
+                if (modal.id !== 'editProfileModal') { // Don't reset edit profile form
+                    form.reset();
+                }
+            });
+            
+            // Reset specific elements
+            if (modal.id === 'changePasswordModal') {
+                document.getElementById('passwordStrength').innerHTML = '';
+            }
+            
+            if (modal.id === 'editProfileModal') {
+                document.getElementById('emailOtpContainer').style.display = 'none';
+                emailVerified = true;
+                otpSent = false;
+            }
+        });
+
+        // Initialize edit profile modal with current data
+        document.getElementById('editProfileModal').addEventListener('show.bs.modal', function() {
+            document.getElementById('editName').value = userData.name;
+            document.getElementById('editEmail').value = userData.email;
+            document.getElementById('editPhone').value = userData.phone;
+            originalEmail = userData.email;
+        });
+
+        // Prevent modal from closing when clicking backdrop if OTP verification is pending
+        document.getElementById('editProfileModal').addEventListener('hide.bs.modal', function(e) {
+            if (!emailVerified && document.getElementById('emailOtpContainer').style.display !== 'none') {
+                e.preventDefault();
+                showNotification('Please verify your email before closing or cancel the email change.', 'error');
+            }
+        });
+
+        // Handle profile image click
+        document.getElementById('profileImage').addEventListener('click', function() {
+            const modal = new bootstrap.Modal(document.getElementById('editProfileModal'));
+            modal.show();
+            // Focus on file input after modal is shown
+            setTimeout(() => {
+                document.getElementById('profileImageUpload').focus();
+            }, 500);
+        });
+
+    </script>
+
+<%- include("../../views/partials/user/footer") %>
+</body>
+

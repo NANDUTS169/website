@@ -5,7 +5,7 @@ const User = require("../../models/userSchema");
 
 const getUserProductList = async (req, res) => {
   try {
-    console.log("234567890",req.params.id)
+    // console.log("234567890",req.params.id)
     const products = await Product.find({
       isBlocked: false,
       status: "Available"
@@ -34,7 +34,7 @@ const getUserProductList = async (req, res) => {
 const getProductDetailPage = async (req, res) => {
     try {
         const productId = req.params.id;
-        console.log("Product ID:", productId);
+        // console.log("Product ID:", productId);
         // Fetch product by ID and pass it to the view
         const product = await Product.findById(productId).populate('category');
       res.render("product-detail", { product });

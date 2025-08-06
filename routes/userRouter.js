@@ -5,7 +5,8 @@ const profileController = require("../controllers/user/profileController");
 const productController = require("../controllers/user/productController");
 const passport = require("../config/passport");
 const { userAuth } = require('../middlewares/auth');
-const isUserLoggedIn = require('../middlewares/sessionHandling');
+const { isUserLoggedIn } = require('../middlewares/sessionHandling');
+const { uploadProductImages, uploadProfileImage } = require('../helpers/multer');
 
 router.get("/",userController.loadHomepage);
 
@@ -37,7 +38,9 @@ router.post("/verify-passForgot-otp",profileController.verifyForgotPassOtp);
 router.get("/reset-password",profileController.getResetPassPage);
 router.post("/resend-forgot-otp",profileController.resendOtp);
 router.post("/reset-password",profileController.postNewPassword);
-// router.get("/userProfile",userAuth,profileController.userProfile);
+router.get("/userProfile",isUserLoggedIn,profileController.getUserProfile);
+router.post("/update-profile",isUserLoggedIn,uploadProfileImage.single('profileImage'),profileController.updateUserProfile);
+
 
 // product management
 

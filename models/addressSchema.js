@@ -44,7 +44,4 @@ const addressSchema = new Schema ({
 })
 
 const Address = mongoose.model("address",addressSchema);
-
-module.exports = {
-    Address,
-}
+module.exports = Address;
