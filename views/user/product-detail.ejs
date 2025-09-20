@@ -156,7 +156,7 @@
                                     <i class="icon-minus2"></i>
                                 </button>
                             </span>
-                            <input type="text" id="quantity" name="quantity" class="form-control input-number" value="1" min="1" max="<%= product.quantity %>">
+                            <input type="text" id="quantity" name="quantity" class="form-control input-number" value="1" min="1" max="5">
                             <span class="input-group-btn ml-1">
                                 <button type="button" class="quantity-right-plus btn" data-type="plus" data-field="">
                                     <i class="icon-plus2"></i>
@@ -265,24 +265,59 @@
 </script> -->
 
 <script>
-    $(document).ready(function () {
-        const maxQuantity = <%- product.quantity %>
-        $('.quantity-right-plus').click(function (e) {
-            e.preventDefault();
-            let quantity = parseInt($('#quantity').val()) || 0;
-            if (quantity < maxQuantity) {
-                $('#quantity').val(quantity + 1);
-            }
-        });
+document.addEventListener("DOMContentLoaded", () => {
+    const quantityInput = document.getElementById("quantity");
+    const btnMinus = document.querySelector(".quantity-left-minus");
+    const btnPlus = document.querySelector(".quantity-right-plus");
+    const addToCartBtn = document.querySelector(".btn-addtocart");
 
-        $('.quantity-left-minus').click(function (e) {
-            e.preventDefault();
-            let quantity = parseInt($('#quantity').val()) || 1;
-            if (quantity > 1) {
-                $('#quantity').val(quantity - 1);
-            }
-        });
+    // Update quantity
+    btnMinus?.addEventListener("click", () => {
+        let value = parseInt(quantityInput.value);
+        if (value > 1) {
+            quantityInput.value = value - 1;
+        }
     });
+
+    btnPlus?.addEventListener("click", () => {
+        let value = parseInt(quantityInput.value);
+        if (value < 5) {
+            quantityInput.value = value + 1;
+        }
+    });
+
+    // Add to cart
+    addToCartBtn?.addEventListener("click", async (e) => {
+        e.preventDefault();
+
+        const productId = "<%= product._id %>"
+        const quantity = parseInt(quantityInput.value);
+
+        try {
+            const response = await fetch("/addToCart", {
+                method: "POST",
+                headers: {
+                    "Content-Type": "application/json",
+                },
+                body: JSON.stringify({ productId, quantity }),
+            });
+
+            const result = await response.json();
+
+            console.log(result)
+
+            if (response.ok) {
+                alert("Product added to cart!");
+                // Optionally redirect or update cart count
+            } else {
+                alert(result.message || "Something went wrong!");
+            }
+        } catch (error) {
+            console.error("Error adding to cart:", error);
+            alert("Failed to add to cart");
+        }
+    });
+});
 </script>
 
 

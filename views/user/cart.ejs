@@ -1,0 +1,157 @@
+<%- include("../../views/partials/user/header") %>
+
+<div class="breadcrumbs">
+  <div class="container">
+    <div class="row">
+      <div class="col">
+        <p class="bread"><span><a href="/">Home</a></span> / <span>Shopping Cart</span></p>
+      </div>
+    </div>
+  </div>
+</div>
+
+<div class="colorlib-product">
+  <div class="container">
+
+    <!-- Process steps -->
+    <div class="row row-pb-lg">
+      <div class="col-md-10 offset-md-1">
+        <div class="process-wrap">
+          <div class="process text-center active">
+            <p><span>01</span></p>
+            <h3>Shopping Cart</h3>
+          </div>
+          <div class="process text-center">
+            <p><span>02</span></p>
+            <h3>Checkout</h3>
+          </div>
+          <div class="process text-center">
+            <p><span>03</span></p>
+            <h3>Order Complete</h3>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Cart Items -->
+    <div class="row row-pb-lg">
+      <div class="col-md-12">
+        <div class="product-name d-flex">
+          <div class="one-forth text-left px-4"><span>Product Details</span></div>
+          <div class="one-eight text-center"><span>Price</span></div>
+          <div class="one-eight text-center"><span>Quantity</span></div>
+          <div class="one-eight text-center"><span>Total</span></div>
+          <div class="one-eight text-center px-4"><span>Remove</span></div>
+        </div>
+
+        <% if (cart && cart.items.length > 0) { %>
+          <% cart.items.forEach(item => { %>
+            <div class="product-cart d-flex align-items-center">
+              <!-- Product -->
+              <div class="one-forth d-flex align-items-center">
+                <div class="product-img"
+                  style="background-image: url('/uploads/product-images/<%= item.productId.productImage[0] %>');">
+                </div>
+                <div class="display-tc px-3">
+                  <h5><%= item.productId.productName %></h5>
+                </div>
+              </div>
+
+              <!-- Price -->
+              <div class="one-eight text-center">
+                <span class="price">₹<%= item.price.toFixed(2) %></span>
+              </div>
+
+              <!-- Quantity -->
+              <div class="one-eight text-center">
+                <input type="number"
+                  class="form-control text-center"
+                  min="1" max="5"
+                  value="<%= item.quantity %>"
+                  onchange="updateQuantity('<%= item.productId._id %>', this.value)">
+              </div>
+
+              <!-- Total -->
+              <div class="one-eight text-center">
+                <span class="price">₹<%= item.totalPrice.toFixed(2) %></span>
+              </div>
+
+              <!-- Remove -->
+              <div class="one-eight text-center">
+                <a href="/cart/remove/<%= item.productId._id %>" class="btn btn-sm btn-outline-danger">✕</a>
+              </div>
+            </div>
+          <% }) %>
+        <% } else { %>
+          <div class="text-center py-5">
+            <h4>Your cart is empty.</h4>
+          </div>
+        <% } %>
+      </div>
+    </div>
+
+    <!-- Totals -->
+    <% if (cart && cart.items.length > 0) { %>
+    <div class="row row-pb-lg">
+      <div class="col-md-12">
+        <div class="total-wrap">
+          <div class="row">
+            <div class="col-sm-8">
+              <form action="#">
+                <div class="row form-group">
+                  <div class="col-sm-9">
+                    <input type="text" class="form-control input-number" placeholder="Your Coupon Number...">
+                  </div>
+                  <div class="col-sm-3">
+                    <input type="submit" value="Apply Coupon" class="btn btn-primary">
+                  </div>
+                </div>
+              </form>
+            </div>
+
+            <div class="col-sm-4 text-center">
+              <div class="total">
+                <div class="sub">
+                  <p><span>Subtotal:</span> <span>₹<%= subtotal.toFixed(2) %></span></p>
+                  <p><span>Delivery:</span> <span>₹0.00</span></p>
+                  <p><span>Discount:</span> <span>₹<%= discount.toFixed(2) %></span></p>
+                </div>
+                <div class="grand-total">
+                  <p><span><strong>Total:</strong></span>
+                    <span>₹<%= grandTotal.toFixed(2) %></span></p>
+                </div>
+                <a href="/checkout" class="btn btn-success mt-3">Proceed to Checkout</a>
+              </div>
+            </div>
+
+          </div>
+        </div>
+      </div>
+    </div>
+    <% } %>
+  </div>
+</div>
+
+<%- include("../../views/partials/user/footer") %>
+
+<!-- Scripts -->
+<script>
+  async function updateQuantity(productId, quantity) {
+    try {
+      const res = await fetch("/cart/update", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ productId, quantity })
+      });
+
+      const data = await res.json();
+      if (data.success) {
+        location.reload();
+      } else {
+        alert(data.message);
+      }
+    } catch (err) {
+      console.error("Error updating qty:", err);
+    }
+  }
+</script>

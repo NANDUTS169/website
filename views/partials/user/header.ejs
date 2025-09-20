@@ -1,122 +1,156 @@
 <!DOCTYPE HTML>
 <html>
-	<head>
-	<title>Footwear - Free Bootstrap 4 Template by Colorlib</title>
-   <meta charset="utf-8">
-   <meta name="viewport" content="width=device-width, initial-scale=1, shrink-to-fit=no">
 
-	<link href="https://fonts.googleapis.com/css?family=Montserrat:300,400,500,600,700" rel="stylesheet">
-	<link href="https://fonts.googleapis.com/css?family=Rokkitt:100,300,400,700" rel="stylesheet">
-	
-	<!-- Animate.css -->
-	<link rel="stylesheet" href="css/animate.css">
-	<!-- Icomoon Icon Fonts-->
-	<link rel="stylesheet" href="css/icomoon.css">
-	<!-- Ion Icon Fonts-->
-	<link rel="stylesheet" href="css/ionicons.min.css">
-	<!-- Bootstrap  -->
-	<link rel="stylesheet" href="css/bootstrap.min.css">
+<head>
+  <title>Footwear - E-Commerce</title>
+  <meta charset="utf-8">
+  <meta name="viewport"
+    content="width=device-width, initial-scale=1, shrink-to-fit=no">
 
-	<!-- Magnific Popup -->
-	<link rel="stylesheet" href="css/magnific-popup.css">
+  <!-- Fonts -->
+  <link href="https://fonts.googleapis.com/css?family=Montserrat:300,400,500,600,700"
+    rel="stylesheet">
+  <link href="https://fonts.googleapis.com/css?family=Rokkitt:100,300,400,700"
+    rel="stylesheet">
 
-	<!-- Flexslider  -->
-	<link rel="stylesheet" href="css/flexslider.css">
+  <!-- CSS -->
+  <link rel="stylesheet" href="/css/animate.css">
+  <link rel="stylesheet" href="/css/icomoon.css">
+  <link rel="stylesheet" href="/css/ionicons.min.css">
+  <link rel="stylesheet" href="/css/bootstrap.min.css">
+  <link rel="stylesheet" href="/css/magnific-popup.css">
+  <link rel="stylesheet" href="/css/flexslider.css">
+  <link rel="stylesheet" href="/css/owl.carousel.min.css">
+  <link rel="stylesheet" href="/css/owl.theme.default.min.css">
+  <link rel="stylesheet" href="/css/bootstrap-datepicker.css">
+  <link rel="stylesheet" href="/fonts/flaticon/font/flaticon.css">
+  <link rel="stylesheet" href="/css/style.css">
 
-	<!-- Owl Carousel -->
-	<link rel="stylesheet" href="css/owl.carousel.min.css">
-	<link rel="stylesheet" href="css/owl.theme.default.min.css">
-	
-	<!-- Date Picker -->
-	<link rel="stylesheet" href="css/bootstrap-datepicker.css">
-	<!-- Flaticons  -->
-	<link rel="stylesheet" href="fonts/flaticon/font/flaticon.css">
+  <style>
+    /* Navbar Right Elements */
+    .menu-1 ul {
+      display: flex;
+      align-items: center;
+      gap: 15px;
+    }
 
-	<!-- Theme style  -->
-	<link rel="stylesheet" href="css/style.css">
+    .menu-1 ul .cart,
+    .menu-1 ul .wishlist {
+      margin-left: auto; /* push them to right */
+    }
 
-	</head>
-	<body>
+    .menu-1 ul .wishlist {
+      margin-left: 10px; /* small space between cart & wishlist */
+    }
 
-	<div id="page">
-		<nav class="colorlib-nav" role="navigation" style="background-color: white;">
-			<div class="top-menu">
-				<div class="container">
-					<div class="row">
-						<div class="col-sm-7 col-md-9">
-							<div id="colorlib-logo"><a href="index.html">Footwear</a></div>
-						</div>
-						<div class="col-sm-5 col-md-3">
+    .icon-badge {
+      background: red;
+      color: white;
+      font-size: 12px;
+      padding: 2px 6px;
+      border-radius: 50%;
+      position: relative;
+      top: -10px;
+      left: -5px;
+    }
+  </style>
+</head>
 
-						<form action="#" class="search-wrap d-flex align-items-center w-100">
+<body>
+  <div id="page">
+    <nav class="colorlib-nav" role="navigation" style="background-color: white;">
+      <div class="top-menu">
+        <div class="container">
+          <div class="row">
+            <!-- Logo -->
+            <div class="col-sm-7 col-md-9">
+              <div id="colorlib-logo"><a href="/">Footwear</a></div>
+            </div>
 
-							<% if(!locals.user){%>
-							<div class="d-flex" style="width: 200px; justify-content: space-between; margin-right: 25px;">
-								<a style="color: black;" href="Signup"><b>SignUp</b></a>
-							</div>
-							<div class="d-flex" style="width: 200px; justify-content: space-between; margin-right: 25px;">
-								<a style="color: black;" href="login"><b>Login</b></a>
-							</div>
-							<%}else{%>
-							    <div>
-									<div style="display: inline-flex;">
-									<a style="margin-right: 20px; color: black;" href="/userProfile"><b>Profile</b></a>
-									<a style="margin-right: 20px; color: black;" href="/logout"><b>Logout</b></a>
-								    </div>
-								</div>
-							<%}%>
-							<div class="form-group d-flex flex-grow-1">
-								<input type="search" class="form-control search" placeholder="Search" style="width:max-content">
-								<button class="btn btn-primary submit-search text-center" type="submit">
-									<i class="icon-search"></i>
-								</button>
-							</div>
-						</form>
+            <!-- Profile / Login / Search -->
+            <div class="col-sm-5 col-md-3">
+              <form action="/search" method="GET"
+                class="search-wrap d-flex align-items-center w-100">
 
-			         </div>
-		         </div>
-					<div class="row">
-						<div class="col-sm-12 text-left menu-1">
-							<ul>
-								<li class="active"><a href="/">Home</a></li>
-								<li class="has-dropdown">
-									<a href="/products">products</a>
-									<!-- <ul class="dropdown">
-										<li><a href="product-detail.html">Product Detail</a></li>
-										<li><a href="cart.html">Shopping Cart</a></li>
-										<li><a href="checkout.html">Checkout</a></li>
-										<li><a href="order-complete.html">Order Complete</a></li>
-										<li><a href="add-to-wishlist.html">Wishlist</a></li>
-									</ul> -->
-								</li>
-								<li><a href="about.html">About</a></li>
-								<li><a href="contact.html">Contact</a></li>
-								<li class="cart"><a href="cart.html"><i class="icon-shopping-cart"></i> Cart [0]</a></li>
-							</ul>
-						</div>
-					</div>
-				</div>
-			</div>
-			<div class="sale">
-				<div class="container">
-					<div class="row">
-						<div class="col-sm-8 offset-sm-2 text-center">
-							<div class="row">
-								<div class="owl-carousel2">
-									<div class="item">
-										<div class="col">
-											<h3><a href="#">25% off (Almost) Everything! Use Code: Summer Sale</a></h3>
-										</div>
-									</div>
-									<div class="item">
-										<div class="col">
-											<h3><a href="#">Our biggest sale yet 50% off all summer shoes</a></h3>
-										</div>
-									</div>
-								</div>
-							</div>
-						</div>
-					</div>
-				</div>
-			</div>
-		</nav>
+                <% if (!locals.user) { %>
+                <div class="d-flex" style="gap: 15px; margin-right: 25px;">
+                  <a style="color: black;" href="/signup"><b>SignUp</b></a>
+                  <a style="color: black;" href="/login"><b>Login</b></a>
+                </div>
+                <% } else { %>
+                <div>
+                  <div style="display: inline-flex;">
+                    <a style="margin-right: 20px; color: black;" href="/userProfile"><b>Profile</b></a>
+                    <a style="margin-right: 20px; color: black;" href="/logout"><b>Logout</b></a>
+                  </div>
+                </div>
+                <% } %>
+
+                <div class="form-group d-flex flex-grow-1">
+                  <input type="search" name="q" class="form-control search"
+                    placeholder="Search products..." style="width:max-content">
+                  <button class="btn btn-primary submit-search text-center" type="submit">
+                    <i class="icon-search"></i>
+                  </button>
+                </div>
+              </form>
+            </div>
+          </div>
+
+          <!-- Navbar Menu -->
+          <div class="row">
+            <div class="col-sm-12 text-left menu-1">
+              <ul>
+                <li class="active"><a href="/">Home</a></li>
+                <li><a href="/products">Products</a></li>
+                <li><a href="/about">About</a></li>
+                <li><a href="/contact">Contact</a></li>
+
+                <!-- Cart + Wishlist Right Aligned -->
+                <li class="cart">
+                  <a href="/cart">
+                    <i class="icon-shopping-cart"></i> Cart
+                    <% if (locals.cartCount && locals.cartCount > 0) { %>
+                      <span class="icon-badge"><%= cartCount %></span>
+                    <% } %>
+                  </a>
+                </li>
+                <li class="wishlist">
+                  <a href="/wishlist">
+                    <i class="icon-heart"></i> Wishlist
+                    <% if (locals.wishlistCount && locals.wishlistCount > 0) { %>
+                      <span class="icon-badge"><%= wishlistCount %></span>
+                    <% } %>
+                  </a>
+                </li>
+              </ul>
+            </div>
+          </div>
+
+        </div>
+      </div>
+
+      <!-- Sale Banner -->
+      <div class="sale">
+        <div class="container">
+          <div class="row">
+            <div class="col-sm-8 offset-sm-2 text-center">
+              <div class="row">
+                <div class="owl-carousel2">
+                  <div class="item">
+                    <div class="col">
+                      <h3><a href="#">25% off (Almost) Everything! Use Code: SummerSale</a></h3>
+                    </div>
+                  </div>
+                  <div class="item">
+                    <div class="col">
+                      <h3><a href="#">Biggest sale yet – 50% off all summer shoes</a></h3>
+                    </div>
+                  </div>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </nav>

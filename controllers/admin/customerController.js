@@ -2,15 +2,11 @@ const User = require("../../models/userSchema");
 
 
 const customerInfo = async (req, res) => {
-    console.log("CustomerInfo invoked");
     try {
-        console.log("Entered try-catch block");
 
         let search = req.query.search || "";
-        console.log("Search Query:", search);
 
         let page = parseInt(req.query.page, 10) || 1;
-        console.log("Page:", page);
 
         const limit = 5;
 

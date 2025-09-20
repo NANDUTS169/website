@@ -5,11 +5,10 @@ const User = require("../../models/userSchema");
 const fs = require("fs");
 const path = require("path");
 const sharp = require("sharp");
+const { log } = require("console");
 
 const getProductAddPage = async (req,res) => {
-    console.log("Add getProductAddPage Function invoked...");
     try {
-        console.log("sdfghjkxfghjk")
         const category = await Category.find({isListed:true});
         const brand = await Brand.find({isBlocked:false});
         res.render("product-add",{
@@ -22,66 +21,137 @@ const getProductAddPage = async (req,res) => {
     }
 };
 
-const addProducts = async (req,res) => {
-    console.log("Add products funtion invoked...");
+// const addProducts = async (req,res) => {
+//     console.log("Add products funtion invoked...");
+//     try {
+//         const products = req.body;
+//         // console.log(products)
+//         const productExists = await Product.findOne({
+//             productName: products.productName,
+//         });
+        
+//         if(!productExists){
+//             const images = [];
+
+//             if(req.files && req.files.length>0){
+//                 for(let i=0;i<req.files.length;i++){
+//                     const originalImagePath = req.files[i].path;
+
+//                     const resizedImagepath = path.join('Public','uploads','product-images',req.files[i].filename);
+//                     await sharp(originalImagePath).resize({width:440,height:440}).toFile(resizedImagepath);
+//                     images.push(req.files[i].filename); 
+//                 }
+//             }
+//             const categoryId = await Category.findOne({name:products.category});
+
+//             if(!categoryId){
+//                 return res.status(400).json("Invalid category name")
+//             }
+
+//             const newProduct = new Product({
+//                  productName: products.productName,
+//                  description: products.description,
+//                  brand:products.brand,
+//                  category: categoryId._id,
+//                  regularPrice: products.regularPrice,
+//                  salePrice:products.salePrice,
+//                  createdOn: new Date(),
+//                  quantity: products.quantity,
+//                  size:products.size,
+//                  color:products.color ? products.color : 'undefined',
+//                  productImage:images,
+//                  status: 'Available',
+//             });
+
+//             console.log("product details to be saved: "+newProduct);
+//             await newProduct.save();
+//             return res.redirect("/admin/addProducts");
+
+//         }else{
+//             return res.status(400).json("Product already exist, please try with another name");
+//         }
+//     } catch (error) {
+//         console.error("Error saving product",error);
+//         return res.redirect("/admin/pageerror")
+//     }
+// }
+const addProducts = async (req, res) => {
     try {
         const products = req.body;
-        // console.log(products)
+
         const productExists = await Product.findOne({
             productName: products.productName,
         });
-        
-        if(!productExists){
+
+        if (!productExists) {
+            console.log('inside the condition');
+            
             const images = [];
 
-            if(req.files && req.files.length>0){
-                for(let i=0;i<req.files.length;i++){
-                    const originalImagePath = req.files[i].path;
+            if (req.files && req.files.length > 0) {
+                for (let i = 0; i < req.files.length; i++) {
+                    const originalImagePath = req.files[i].path; // from /re-image
 
-                    const resizedImagepath = path.join('public','uploads','product-images',req.files[i].filename);
-                    await sharp(originalImagePath).resize({width:440,height:440}).toFile(resizedImagepath);
-                    images.push(req.files[i].filename); 
+                    // Resized filename and path (store in product-images folder)
+                    const filename = Date.now() + '-' + req.files[i].originalname;
+                    console.log("🚀 ~ addProducts ~ filename:", filename)
+                    
+                    const resizedImagePath = path.join(__dirname, '../../Public/uploads/product-images', filename);
+
+                    // Resize and store
+                    await sharp(originalImagePath)
+                        .resize({ width: 440, height: 440 })
+                        .toFile(resizedImagePath);
+
+                    images.push(filename);
+
+                    console.log('consolelog inside the addproducts for loop')
                 }
             }
-            const categoryId = await Category.findOne({name:products.category});
+            
 
-            if(!categoryId){
-                return res.status(400).json("Invalid category name")
+            const categoryId = await Category.findOne({ name: products.category });
+
+            if (!categoryId) {
+                return res.status(400).json("Invalid category name");
             }
 
             const newProduct = new Product({
-                 productName: products.productName,
-                 description: products.description,
-                 brand:products.brand,
-                 category: categoryId._id,
-                 regularPrice: products.regularPrice,
-                 salePrice:products.salePrice,
-                 createdOn: new Date(),
-                 quantity: products.quantity,
-                 size:products.size,
-                 color:products.color ? products.color : 'undefined',
-                 productImage:images,
-                 status: 'Available',
+                productName: products.productName,
+                description: products.description,
+                brand: products.brand,
+                category: categoryId._id,
+                regularPrice: products.regularPrice,
+                salePrice: products.salePrice,
+                createdOn: new Date(),
+                quantity: products.quantity,
+                size: products.size,
+                color: products.color || 'undefined',
+                productImage: images,
+                status: 'Available',
             });
 
-            console.log("product details to be saved: "+newProduct);
+            console.log("Product details to be saved: ", newProduct);
             await newProduct.save();
             return res.redirect("/admin/addProducts");
 
-        }else{
-            return res.status(400).json("Product already exist, please try with another name");
+        } else {
+            return res.status(400).json("Product already exists, please try with another name");
         }
+
     } catch (error) {
-        console.error("Error saving product",error);
-        return res.redirect("/admin/pageerror")
+        console.error("Error saving product", error);
+        return res.redirect("/admin/pageerror");
     }
 }
+
+
 
 const getAllProducts = async (req,res) => {
     try {
         const search = req.query || "";
         const page = req.query.page || 1;
-        const limit = 4;
+        const limit = 20;
 
         const productData = await Product.find({
             $or:[

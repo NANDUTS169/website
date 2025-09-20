@@ -36,18 +36,19 @@ const errorHandling = (req, res, next) => {
     // console.log("Path:", req.path);
 
     // Ignore static files (JS, CSS, images)
-    if (req.originalUrl.match(/\.(js|css|png|jpg|jpeg|gif|svg|woff|woff2|ttf|eot|ico)$/)) {
-        return next(); 
-    }
+    // if (req.originalUrl.match(/\.(js|css|png|jpg|jpeg|gif|svg|woff|woff2|ttf|eot|ico)$/)) {
+    //     return next(); 
+    // }
 
     // Check if the request is for an admin route
-    if (req.originalUrl.startsWith("/admin")) {
-        console.log("Admin error page printed");
-        return res.redirect("/admin/pageerror");
-    } else {
-        console.log("User error page printed");
-        return res.redirect("/pageNotFound");
-    }
+    // if (req.originalUrl.startsWith("/admin")) {
+    //     console.log("Admin error page printed");
+    //     return res.redirect("/admin/pageerror");
+    // } else {
+    //     console.log("User error page printed");
+    //     return res.redirect("/pageNotFound");
+    // }
+    next();
 };
 
 module.exports = {

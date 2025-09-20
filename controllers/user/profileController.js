@@ -152,17 +152,19 @@ const postNewPassword = async (req,res) => {
 }
 
 const getUserProfile = async(req,res) => {
+
     try {
         console.log("Get user Profile function invoked..");
         const userId = req.session.user;
+        console.log("User in the getprofile page",req.session.user);
         const user = await User.findById(userId).lean();
         console.log(user);
         if(!user) return res.redirect("/login");
 
-        const addressDoc = await Address.findOne({ UserId: userId}).lean();
+        const addressDoc = await Address.findOne({ UserId: userId, "address.isActive" : true}).lean();
         console.log("AddressDoc : ",addressDoc);
         const addresses = addressDoc?.address || [];
-        console.log("Addresses: ",addresses);
+        console.log("Addresses passing to the profile page : ",addresses);
 
         const orders = await Order.find({address: userId})
         .populate("orderedItems.product")
@@ -193,7 +195,7 @@ const updateUserProfile = async (req,res) => {
         if(!user){
             return res.status(404).json({success:false,message:"user not found"});
         }
-
+        
         user.name = name?.trim() || user.name;
         user.email = email?.trim() || user.email;
         user.phone = phone?.trim() || user.phone;
@@ -223,6 +225,34 @@ const updateUserProfile = async (req,res) => {
 };
 
 
+const changePassword = async (req,res) => {
+    try {
+        const userId = req.session.user || req.user._id;
+        const {currentPassword, newPassword} = req.body;
+
+        const user = await User.findById(userId);
+        if(!user) {
+            return res.status(404).json({error: "User not found"});
+        }
+
+        const isMatch = await bcrypt.compare(currentPassword, user.password);
+        if(!isMatch) {
+            return res.status(400).json({error: "Current password is incorrect"});
+        }
+
+        const hashedPassword = await bcrypt.hash(newPassword, 10);
+
+        user.password = hashedPassword;
+        await user.save();
+
+        res.json({message:"Password changed successfully"});
+
+    } catch (error) {
+        console.error(error);
+        res.status(500).json({error:"Server error"});
+    }
+}
+
 module.exports = {
     getForgotPassPage,
     forgotEmailValid,
@@ -232,4 +262,5 @@ module.exports = {
     postNewPassword,
     getUserProfile,
     updateUserProfile,
+    changePassword,
 };

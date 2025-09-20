@@ -1,0 +1,84 @@
+<%- include("../../views/partials/user/header") %>
+
+<div class="breadcrumbs">
+    <div class="container">
+        <div class="row">
+            <div class="col">
+                <p class="bread"><span><a href="/">Home</a></span> / <span>My Wishlist</span></p>
+            </div>
+        </div>
+    </div>
+</div>
+
+<div class="colorlib-product">
+    <div class="container">
+        <div class="row row-pb-lg">
+            <div class="col-md-12">
+                <div class="product-name d-flex">
+                    <div class="one-forth text-left px-4"><span>Product</span></div>
+                    <div class="one-eight text-center"><span>Price</span></div>
+                    <div class="one-eight text-center"><span>Status</span></div>
+                    <div class="one-eight text-center"><span>Move to Cart</span></div>
+                    <div class="one-eight text-center px-4"><span>Remove</span></div>
+                </div>
+
+                <% if (wishlist && wishlist.items.length > 0) { %>
+                    <% wishlist.items.forEach(item => { %>
+                        <div class="product-cart d-flex">
+                            <div class="one-forth">
+                                <div class="product-img" 
+                                     style="background-image: url('/uploads/product-images/<%= item.productId.productImage[0] %>');">
+                                </div>
+                                <div class="display-tc">
+                                    <h3><%= item.productId.productName %></h3>
+                                </div>
+                            </div>
+                            <div class="one-eight text-center">
+                                <div class="display-tc">
+                                    <span class="price">₹ <%= item.productId.salePrice.toFixed(2) %></span>
+                                </div>
+                            </div>
+                            <div class="one-eight text-center">
+                                <div class="display-tc">
+                                    <% if (item.productId.isBlocked || !item.productId.isListed) { %>
+                                        <span class="text-danger">Unavailable</span>
+                                    <% } else if (item.productId.stock <= 0) { %>
+                                        <span class="text-danger">Out of Stock</span>
+                                    <% } else { %>
+                                        <span class="text-success">In Stock</span>
+                                    <% } %>
+                                </div>
+                            </div>
+                            <div class="one-eight text-center">
+                                <div class="display-tc">
+                                    <% if (item.productId.stock > 0 && !item.productId.isBlocked && item.productId.isListed) { %>
+                                        <form action="/cart/add" method="POST" style="display:inline;">
+                                            <input type="hidden" name="productId" value="<%= item.productId._id %>">
+                                            <button type="submit" class="btn btn-sm btn-primary">Move to Cart</button>
+                                        </form>
+                                    <% } else { %>
+                                        <button class="btn btn-sm btn-secondary" disabled>Unavailable</button>
+                                    <% } %>
+                                </div>
+                            </div>
+                            <div class="one-eight text-center">
+                                <div class="display-tc">
+                                    <form action="/wishlist/remove" method="POST" style="display:inline;">
+                                        <input type="hidden" name="productId" value="<%= item.productId._id %>">
+                                        <button type="submit" class="closed"></button>
+                                    </form>
+                                </div>
+                            </div>
+                        </div>
+                    <% }) %>
+                <% } else { %>
+                    <div class="text-center">
+                        <h4>Your wishlist is empty.</h4>
+                    </div>
+                <% } %>
+            </div>
+        </div>
+    </div>
+</div>
+
+<%- include("../../views/partials/user/footer") %>

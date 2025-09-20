@@ -16,8 +16,8 @@ const getBrandPage = async (req,res) => {
             totalPages: totalPages,
             totalBrands: totalBrands,
 
-        })
-
+        });
+        
     } catch (error) {
         console.error(error);
         res.redirect("/pageerror");
