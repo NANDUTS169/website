@@ -8,14 +8,33 @@ function getUserIdFromSession(req) {
 }
 
 // Show Wishlist
+// const getWishlist = async (req, res) => {
+//   try {
+//     const userId = getUserIdFromSession(req);
+//     const wishlist = await Wishlist.findOne({ userId }).populate("items.productId");
+//     return res.render("wishlist", { user: req.session.user, wishlist });
+//   } catch (err) {
+//     console.error("Error loading wishlist:", err);
+//     return res.status(500).render("user-error", { error: "Failed to load wishlist" });
+//   }
+// };
+
 const getWishlist = async (req, res) => {
   try {
-    const userId = getUserIdFromSession(req);
-    const wishlist = await Wishlist.findOne({ userId }).populate("items.productId");
-    return res.render("wishlist", { user: req.session.user, wishlist });
+    const userId = getUserIdFromSession(req); // your function
+    const wishlist = await Wishlist.findOne({ userId })
+      .populate({
+        path: 'items.productId',
+        select: 'productName productImage quantity isBlocked status regularPrice salePrice category',
+        populate: { path: 'category', select: 'isListed name' } // populate category inside product
+      })
+      .lean();
+
+    console.log('wishlist debug:', JSON.stringify(wishlist, null, 2)); // debug output
+    return res.render('wishlist', { user: req.session.user, wishlist });
   } catch (err) {
-    console.error("Error loading wishlist:", err);
-    return res.status(500).render("user-error", { error: "Failed to load wishlist" });
+    console.error('Error loading wishlist:', err);
+    return res.status(500).render('user-error', { error: 'Failed to load wishlist' });
   }
 };
 
@@ -35,7 +54,6 @@ const addToWishlist = async (req, res) => {
     const product = await Product.findById(productId);
     if (!product) return res.status(404).json({ message: "Product not found" });
 
-    // OPTIONAL: if you want to also block by category flags, fetch & check
     let categoryBlocked = false;
     try {
       if (product.category) {
@@ -44,9 +62,8 @@ const addToWishlist = async (req, res) => {
           categoryBlocked = true;
         }
       }
-    } catch (_) { /* ignore category fetch errors */ }
+    } catch (_) { }
 
-    // Match your Product schema: isBlocked + status + quantity
     const unavailable =
       product.isBlocked === true ||
       product.status !== "Available" ||
@@ -79,22 +96,25 @@ const addToWishlist = async (req, res) => {
 };
 
 // Remove from Wishlist
+
 const removeFromWishlist = async (req, res) => {
   try {
     const userId = getUserIdFromSession(req);
     const { productId } = req.body;
+    if (!productId) return res.status(400).json({ message: "Product ID is required" });
 
     await Wishlist.updateOne(
       { userId },
       { $pull: { items: { productId } } }
     );
 
-    return res.redirect("/wishlist");
+    return res.status(200).json({ message: "Removed from wishlist" });
   } catch (err) {
     console.error("Error removing wishlist item:", err);
     return res.status(500).json({ message: "Server error" });
   }
 };
+
 
 module.exports = {
   getWishlist,

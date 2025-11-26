@@ -1,33 +1,42 @@
 <%- include("../../views/partials/admin/header") %>
 
-<div class="container">
+<div class="container mt-5">
   <div class="row justify-content-center">
-    <div class="col-md-6 mt-60">
-      <form method="post" action="/admin/editCategory/<%= category._id %>" id="editCategoryForm">
-        <div class="d-grid text-end mt-30 col-md-5">
-          <button class="btn btn-primary" type="submit">Update category</button>
+    <div class="col-md-8">
+      <div class="card shadow-sm border-0">
+        <div class="card-header bg-primary text-white">
+          <h4 class="mb-0">Edit Category</h4>
         </div>
+        <div class="card-body">
+          <form method="post" action="/admin/editCategory/<%= category._id %>" id="editCategoryForm">
+            
+            <div class="mb-3">
+              <label for="categoryName" class="form-label fw-bold">Category Name</label>
+              <input type="text" 
+                     id="categoryName"
+                     name="categoryName" 
+                     value="<%= category.name %>" 
+                     class="form-control" 
+                     placeholder="Enter category name" />
+            </div>
 
-        <div class="mb-4 mt-30">
-          <label for="product_name" class="form-label">Name</label>
-          <input
-            type="text"
-            name="categoryName"
-            value="<%= category.name %>"
-            class="form-control border"
-            placeholder="Enter category name"
-          />
-        </div>
+            <div class="mb-3">
+              <label for="description" class="form-label fw-bold">Description</label>
+              <textarea id="description"
+                        name="description" 
+                        class="form-control" 
+                        placeholder="Enter category description"
+                        rows="4"><%= category.description %></textarea>
+            </div>
 
-        <div class="mb-4">
-          <label class="form-label">Description</label>
-          <textarea
-            name="description"
-            class="form-control border"
-            placeholder="Enter description"
-          ><%= category.description %></textarea>
+            <div class="d-flex justify-content-between mt-4">
+              <a href="/admin/category" class="btn btn-secondary">Back to Categories</a>
+              <button type="submit" class="btn btn-success">Update Category</button>
+            </div>
+
+          </form>
         </div>
-      </form>
+      </div>
     </div>
   </div>
 </div>
@@ -57,10 +66,10 @@
     }
   };
 
-  // Client-side form validation
+  // Client-side validation
   document.getElementById("editCategoryForm").addEventListener("submit", function (e) {
-    const name = document.querySelector("input[name='categoryName']").value.trim();
-    const desc = document.querySelector("textarea[name='description']").value.trim();
+    const name = document.getElementById('categoryName').value.trim();
+    const desc = document.getElementById('description').value.trim();
     const nameRegex = /^[a-zA-Z\s]+$/;
 
     if (!name || !desc) {
@@ -84,4 +93,3 @@
   });
 </script>
 
-<%- include("../../views/partials/admin/footer") %>

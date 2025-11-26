@@ -26,7 +26,9 @@ app.use(session({
 }))
 
 app.use((req,res,next) => {
-    res.locals.session = req.session;
+    res.locals.user = req.session.user || null;
+    res.locals.cartCount = req.session.cartCount || 0;
+    res.locals.wishlistCount = req.session.wishlistCount || 0;
     next();
 });
 

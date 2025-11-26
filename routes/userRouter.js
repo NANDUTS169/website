@@ -18,8 +18,6 @@ router.get("/",userController.loadHomepage);
 router.get("/login",userController.loadLogin);
 router.post("/login",userController.login);
 
-router.get("/productdetail",userController.productdetail);
-
 // Sign up Mangement
 router.get("/signup",userController.loadsignup);
 router.post("/signup",userController.signup);
@@ -56,6 +54,7 @@ router.patch('/addresses/:addressId', isUserLoggedIn,addressController.updateAdd
 // product management
 
 router.get("/products", productController.getUserProductList);
+router.get("/productdetail",userController.productdetail);
 router.get("/productdetails/:id",productController.getProductDetailPage);
 
 // Wishlist Mangement
@@ -73,6 +72,7 @@ router.get('/cart/remove/:productId',userAuth,cartController.removeFromCart);
 // checkout Management
 
 router.get("/checkout",userAuth,checkoutController.getcheckoutPage);
+
 
 // Error Management
 router.get("/pageNotFound",userController.pageNotFound);

@@ -1,0 +1,17 @@
+<div class="col-lg-3 col-md-4 col-sm-6 mb-4 text-center d-flex">
+  <div class="product-entry border position-relative w-100">
+    <a href="/productdetails/<%= product._id %>" class="prod-img d-block">
+      <img src="/uploads/product-images/<%= product.productImage[0] %>" class="img-fluid" alt="<%= product.productName %>">
+    </a>
+    <button class="wishlist-btn" onclick="addToWishlist('<%= product._id %>')">
+      <i class="icon-heart" style="font-size: 20px; color: red;"></i>
+    </button>
+    <div class="desc">
+      <h2><a href="/productdetails/<%= product._id %>"><%= product.productName %></a></h2>
+      <span class="price">₹ <%= product.salePrice %></span>product-entry border position-relative w-100"
+      <p>
+        <button class="btn btn-sm btn-primary mt-2" onclick="addToCart('<%= product._id %>')">Add to Cart</button>
+      </p>
+    </div>
+  </div>
+</div>

@@ -1,84 +1,172 @@
 <%- include("../../views/partials/user/header") %>
 
 <div class="breadcrumbs">
-    <div class="container">
-        <div class="row">
-            <div class="col">
-                <p class="bread"><span><a href="/">Home</a></span> / <span>My Wishlist</span></p>
-            </div>
-        </div>
+  <div class="container">
+    <div class="row">
+      <div class="col">
+        <p class="bread"><span><a href="/">Home</a></span> / <span>My Wishlist</span></p>
+      </div>
     </div>
+  </div>
 </div>
 
 <div class="colorlib-product">
-    <div class="container">
-        <div class="row row-pb-lg">
-            <div class="col-md-12">
-                <div class="product-name d-flex">
-                    <div class="one-forth text-left px-4"><span>Product</span></div>
-                    <div class="one-eight text-center"><span>Price</span></div>
-                    <div class="one-eight text-center"><span>Status</span></div>
-                    <div class="one-eight text-center"><span>Move to Cart</span></div>
-                    <div class="one-eight text-center px-4"><span>Remove</span></div>
-                </div>
-
-                <% if (wishlist && wishlist.items.length > 0) { %>
-                    <% wishlist.items.forEach(item => { %>
-                        <div class="product-cart d-flex">
-                            <div class="one-forth">
-                                <div class="product-img" 
-                                     style="background-image: url('/uploads/product-images/<%= item.productId.productImage[0] %>');">
-                                </div>
-                                <div class="display-tc">
-                                    <h3><%= item.productId.productName %></h3>
-                                </div>
-                            </div>
-                            <div class="one-eight text-center">
-                                <div class="display-tc">
-                                    <span class="price">₹ <%= item.productId.salePrice.toFixed(2) %></span>
-                                </div>
-                            </div>
-                            <div class="one-eight text-center">
-                                <div class="display-tc">
-                                    <% if (item.productId.isBlocked || !item.productId.isListed) { %>
-                                        <span class="text-danger">Unavailable</span>
-                                    <% } else if (item.productId.stock <= 0) { %>
-                                        <span class="text-danger">Out of Stock</span>
-                                    <% } else { %>
-                                        <span class="text-success">In Stock</span>
-                                    <% } %>
-                                </div>
-                            </div>
-                            <div class="one-eight text-center">
-                                <div class="display-tc">
-                                    <% if (item.productId.stock > 0 && !item.productId.isBlocked && item.productId.isListed) { %>
-                                        <form action="/cart/add" method="POST" style="display:inline;">
-                                            <input type="hidden" name="productId" value="<%= item.productId._id %>">
-                                            <button type="submit" class="btn btn-sm btn-primary">Move to Cart</button>
-                                        </form>
-                                    <% } else { %>
-                                        <button class="btn btn-sm btn-secondary" disabled>Unavailable</button>
-                                    <% } %>
-                                </div>
-                            </div>
-                            <div class="one-eight text-center">
-                                <div class="display-tc">
-                                    <form action="/wishlist/remove" method="POST" style="display:inline;">
-                                        <input type="hidden" name="productId" value="<%= item.productId._id %>">
-                                        <button type="submit" class="closed"></button>
-                                    </form>
-                                </div>
-                            </div>
-                        </div>
-                    <% }) %>
-                <% } else { %>
-                    <div class="text-center">
-                        <h4>Your wishlist is empty.</h4>
-                    </div>
-                <% } %>
-            </div>
+  <div class="container">
+    <div class="row row-pb-lg">
+      <div class="col-md-12">
+        <div class="product-name d-flex">
+          <div class="one-forth text-left px-4"><span>Product</span></div>
+          <div class="one-eight text-center"><span>Price</span></div>
+          <div class="one-eight text-center"><span>Status</span></div>
+          <div class="one-eight text-center"><span>Move to Cart</span></div>
+          <div class="one-eight text-center px-4"><span>Remove</span></div>
         </div>
+
+        <% if (wishlist && wishlist.items.length > 0) { %>
+          <% wishlist.items.forEach(item => { %>
+          <div class="product-cart d-flex wishlist-item" id="wishlist-<%= item.productId._id %>">
+            <div class="one-forth">
+              <div class="product-img" style="background-image: url('/uploads/product-images/<%= item.productId.productImage[0] %>');"></div>
+              <div class="display-tc">
+                <h3><%= item.productId.productName %></h3>
+              </div>
+            </div>
+
+            <div class="one-eight text-center">
+              <div class="display-tc">
+                <span class="price">₹<%= item.productId.salePrice.toFixed(2) %></span>
+              </div>
+            </div>
+
+            <div class="one-eight text-center">
+              <div class="display-tc">
+                <% if (item.productId.isBlocked || !item.productId.isListed) { %>
+                  <span class="text-danger">Unavailable</span>
+                <% } else if (item.productId.stock <= 0) { %>
+                  <span class="text-danger">Out of Stock</span>
+                <% } else { %>
+                  <span class="text-success">In Stock</span>
+                <% } %>
+              </div>
+            </div>
+
+            <div class="one-eight text-center">
+              <div class="display-tc">
+                <% if (item.productId.stock > 0 && !item.productId.isBlocked && item.productId.isListed) { %>
+                  <form action="/addToCart" method="POST" style="display:inline;">
+                    <input type="hidden" name="productId" value="<%= item.productId._id %>">
+                    <button type="submit" class="btn btn-sm btn-primary">Move to Cart</button>
+                  </form>
+                <% } else { %>
+                  <button class="btn btn-sm btn-secondary" disabled>Unavailable</button>
+                <% } %>
+              </div>
+            </div>
+
+            <div class="one-eight text-center">
+              <div class="display-tc">
+                <!-- Wishlist toggle button -->
+                <button class="wishlist-btn"
+                        onclick="toggleWishlist(this, '<%= item.productId._id %>')">
+                  <i class="icon-heart" style="font-size:20px; color:red;"></i>
+                </button>
+              </div>
+            </div>
+
+          </div>
+          <% }) %>
+        <% } else { %>
+          <div class="text-center">
+            <h4>Your wishlist is empty.</h4>
+          </div>
+        <% } %>
+
+      </div>
     </div>
+  </div>
 </div>
+
+<script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
+
+<script>
+  // Add to wishlist
+  async function addToWishlist(btn, productId) {
+    try {
+      btn.disabled = true;
+      const res = await fetch("/wishlist/add", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ productId })
+      });
+
+      const data = await res.json().catch(() => ({}));
+
+      if (!res.ok) {
+        Swal.fire({ icon: "error", title: "Oops...", text: data.message || "Failed to add to wishlist.", confirmButtonColor: "#d33" });
+        btn.disabled = false;
+        return;
+      }
+
+      Swal.fire({ icon: "success", title: "Added to Wishlist!", text: data.message || "Product added successfully.", showConfirmButton: false, timer: 1500 });
+
+      // Change heart icon to red
+      const icon = btn.querySelector('i');
+      if (icon) { icon.style.color = 'red'; }
+
+      btn.disabled = false;
+
+    } catch (err) {
+      console.error(err);
+      Swal.fire({ icon: "error", title: "Error", text: "Something went wrong.", confirmButtonColor: "#d33" });
+      btn.disabled = false;
+    }
+  }
+
+  // Remove from wishlist
+  async function removeFromWishlist(btn, productId) {
+    try {
+      btn.disabled = true;
+
+      const res = await fetch("/wishlist/remove", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ productId })
+      }); 
+
+      const data = await res.json().catch(() => ({}));
+
+      if (!res.ok) {
+        Swal.fire({ icon: "error", title: "Oops...", text: data.message || "Failed to remove.", confirmButtonColor: "#d33" });
+        btn.disabled = false;
+        return;
+      }
+      
+      Swal.fire({ icon: "success", title: "Removed from Wishlist", text: data.message || "Product removed successfully.", showConfirmButton: false, timer: 1500 });
+
+      // Remove from DOM dynamically
+      const wishlistItem = document.getElementById(`wishlist-${productId}`);
+      if (wishlistItem) wishlistItem.remove();
+
+      btn.disabled = false;
+
+    } catch (err) {
+      console.error(err);
+      Swal.fire({ icon: "error", title: "Error", text: "Something went wrong.", confirmButtonColor: "#d33" });
+      btn.disabled = false;
+    }
+  }
+
+  // Toggle wishlist (add/remove)
+  async function toggleWishlist(btn, productId) {
+    const icon = btn.querySelector('i');
+    const isAdded = icon.style.color === 'red'; // currently in wishlist
+
+    if (isAdded) {
+      await removeFromWishlist(btn, productId);
+    } else {
+      await addToWishlist(btn, productId);
+    }
+  }
+</script>
 
 <%- include("../../views/partials/user/footer") %>

@@ -456,6 +456,7 @@ function updateAddressList(addresses) {
     });
 }
 
+
 async function deleteAddress(addressId) {
     if (!confirm("Are you sure you want to delete this address?")) return;
 
@@ -484,7 +485,6 @@ async function deleteAddress(addressId) {
         alert("Something went wrong. Check console.");
     }
 }
-
 
 
 let editingAddressId = null; // null = add mode, value = edit mode

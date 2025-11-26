@@ -214,7 +214,7 @@
         </div>
 
         <% if (locals.message && message.length > 0) { %>
-          <div style="text-align: center; color: darkred;"><%= message %></div>
+          <div style="text-align: center; color: darkred;"><%= message %></div
         <% } %>
 
         <a href="/forgot-password" class="forgot-password-link">Forgot password?</a>
@@ -231,6 +231,7 @@
   </div>
 
   <script>
+
     const togglePassword = document.getElementById("toggle-password");
     const passwordInput = document.getElementById("password");
 
@@ -276,5 +277,6 @@
       return isValid;
     }
   </script>
+
 </body>
 </html>

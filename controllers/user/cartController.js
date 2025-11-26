@@ -32,81 +32,6 @@ const cart = async (req, res) => {
 };
 
 
-// const addToCart = async (req, res) => {
-//     try {
-//         const { productId, quantity } = req.body;
-//         const userId = req.session.user;
-
-//         if (!productId || !quantity || quantity < 1 || quantity > 5) {
-//             return res.status(400).json({ message: "Invalid product or quantity" });
-//         }
-
-//         const product = await Product.findById(productId).populate("category");
-//         if (!product) return res.status(404).json({ message: "Product not found" });
-
-//         // Check if product or category is blocked
-//         if (product.status === "blocked" || product.category.status === "blocked") {
-//             return res.status(400).json({ message: "This product is unavailable" });
-//         }
-
-//         // Out of stock
-//         if (product.quantity < 1) {
-//             return res.status(400).json({ message: "Out of stock" });
-//         }
-
-//         const price = product.salePrice || product.regularPrice;
-//         let cart = await Cart.findOne({ userId });
-
-//         if (!cart) {
-//             cart = new Cart({
-//                 userId,
-//                 items: [{
-//                     productId,
-//                     quantity,
-//                     price,
-//                     totalPrice: price * quantity
-//                 }]
-//             });
-//         } else {
-//             const existingItem = cart.items.find(item => item.productId.toString() === productId);
-
-//             if (existingItem) {
-//                 const newQty = existingItem.quantity + quantity;
-
-//                 if (newQty > 5) {
-//                     return res.status(400).json({ message: "Maximum 5 units per product" });
-//                 }
-//                 if (newQty > product.quantity) {
-//                     return res.status(400).json({ message: "Not enough stock" });
-//                 }
-
-//                 existingItem.quantity = newQty;
-//                 existingItem.totalPrice = newQty * existingItem.price;
-//             } else {
-//                 cart.items.push({
-//                     productId,
-//                     quantity,
-//                     price,
-//                     totalPrice: price * quantity
-//                 });
-//             }
-//         }
-
-//         await cart.save();
-
-//         await Wishlist.updateOne(
-//             { userId },
-//             { $pull: { items: { productId } } }
-//         );
-
-//         return res.status(200).json({ message: "Added to cart successfully" });
-
-//     } catch (err) {
-//         console.error("Error adding to cart:", err);
-//         res.status(500).json({ message: "Server error" });
-//     }
-// };
-
 const addToCart = async (req, res) => {
   try {
     const userId = (req.session.user?._id || req.session.user);
@@ -123,7 +48,6 @@ const addToCart = async (req, res) => {
     const product = await Product.findById(productId).populate("category");
     if (!product) return res.status(404).json({ message: "Product not found" });
 
-    // Match Product schema: block if not available
     const categoryBlocked = product.category && (product.category.isBlocked === true || product.category.status === "blocked" || product.category.isListed === false);
     if (product.isBlocked === true || product.status !== "Available" || product.quantity < 1 || categoryBlocked) {
       return res.status(400).json({ message: "This product is unavailable" });
@@ -153,8 +77,7 @@ const addToCart = async (req, res) => {
     }
 
     await cart.save();
-
-    // Remove from wishlist if present
+    
     await Wishlist.updateOne({ userId }, { $pull: { items: { productId } } });
 
     return res.status(200).json({ message: "Added to cart successfully" });

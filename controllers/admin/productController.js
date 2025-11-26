@@ -304,7 +304,7 @@ const editProduct = async (req, res) => {
     // Handle new images (cropper uploads)
     if (req.files && req.files.length > 0) {
       for (const file of req.files) {
-        const resizedPath = path.join("public", "uploads", "product-images", file.filename);
+        const resizedPath = path.join("public", "uploads", "product-images", file.filename);0
         await sharp(file.path).resize({ width: 440, height: 440 }).toFile(resizedPath);
 
         if (fs.existsSync(file.path)) {

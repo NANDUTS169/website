@@ -5,11 +5,11 @@ const customerController = require('../controllers/admin/customerController');
 const categoryController = require("../controllers/admin/categoryController");
 const brandController = require("../controllers/admin/brandController");
 const productController = require("../controllers/admin/productController");
+const orderController = require("../controllers/admin/orderController");
 const {userAuth,adminAuth} = require("../middlewares/auth");
 const multer = require("multer");
-
-// const storage = require("../helpers/multer");
-// const uploads = multer({storage:storage});
+const storage = require("../helpers/multer");
+const uploads = multer({storage:storage});
 
 const { uploadRawImages , uploadProductImages } = require('../helpers/multer');
 
@@ -58,9 +58,11 @@ router.post("/removeProductOffer",adminAuth,productController.removeProductOffer
 router.get("/blockProduct",adminAuth,productController.blockProduct);
 router.get("/unblockProduct",adminAuth,productController.unblockProduct);
 router.get("/editProduct",adminAuth,productController.getEditProduct);
-// router.post("/editProduct/:id",adminAuth,uploads.array("images",4),productController.editProduct);
+router.post("/editProduct/:id",adminAuth,uploadProductImages.array("images",4),productController.editProduct);
 router.post("/deleteImage",adminAuth,productController.deleteSingleImage);
 
+// Order Management
+router.get("/orderlist",adminAuth,orderController.getOrderList);
 
 router.get("/dashboard", (req, res) => {
     res.redirect("/admin/");

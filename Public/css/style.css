@@ -1581,7 +1581,7 @@ pre {
     -webkit-box-shadow: 0 0 0 0.2rem rgba(0, 123, 255, 0.25);
     box-shadow: 0 0 0 0.2rem rgba(0, 123, 255, 0.25); }
   .form-control::-webkit-input-placeholder {
-    color: #6c757d;
+    color: #0c84ec;
     opacity: 1; }
   .form-control:-ms-input-placeholder {
     color: #6c757d;
@@ -7284,10 +7284,10 @@ a.text-dark:hover, a.text-dark:focus {
 * ======================================================= */
 body {
   font-family: "Montserrat", Arial, sans-serif;
-  font-weight: 300;
+  font-weight: 500;
   font-size: 14px;
   line-height: 1.8;
-  color: #595959;
+  color: #000;
   background: #fff; }
 
 #page {
@@ -8092,7 +8092,7 @@ h1, h2, h3, h4, h5,
     height: 40px;
     width: 50%;
     margin: 0 auto;
-    border: 1px solid #f0f0f0 !important; }
+    border: 1px solid #000 !important; }
 
 .product-name {
   padding: .8em 0;
