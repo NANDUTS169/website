@@ -1,0 +1,117 @@
+<%- include('../../views/partials/user/header') %>
+
+<div class="container my-4">
+  <% if (notFound) { %>
+    <div class="alert alert-warning">Order <strong><%= orderId %></strong> not found.</div>
+  <% } else if (forbidden) { %>
+    <div class="alert alert-danger">You do not have permission to view this order.</div>
+  <% } else { %>
+
+  <div class="row">
+    <div class="col-md-8">
+      <div class="card mb-3">
+        <div class="card-body">
+          <h5>Order ID: <strong><%= order.orderId %></strong></h5>
+          <p class="text-muted">Placed on: <%= order.displayDate %></p>
+          <p>Status: <span class="badge bg-info text-dark"><%= order.status %></span></p>
+
+          <hr>
+
+          <h6>Items</h6>
+          <% order.itemsForView.forEach(function(it){ %>
+            <div class="d-flex align-items-center mb-3">
+              <img src="/uploads/product-images/<%= (it.product && it.product.productImage && it.product.productImage[0]) ? it.product.productImage[0] : 'placeholder.png' %>"
+                   style="width:72px;height:72px;object-fit:cover;border-radius:4px;margin:1rem">
+              <div class="ms-3">
+                <strong><%= it.name %></strong><br>
+                Qty: <%= it.qty %> &nbsp; × &nbsp; ₹ <%= it.unit %><br>
+                <small class="text-muted">Item total: ₹ <%= it.itemTotal %></small>
+              </div>
+            </div>
+          <% }) %>
+
+        </div>
+      </div>
+
+      <!-- Buttons: cancel if allowed -->
+      <% if (['Pending','Processing'].includes(order.status)) { %>
+        <div class="mb-4">
+          <button class="btn btn-outline-danger" id="cancelBtn">Cancel Order</button>
+        </div>
+      <% } %>
+
+      <!-- Shipping / address -->
+      <div class="card">
+        <div class="card-body">
+          <h6>Shipping Address</h6>
+          <p>
+            <strong><%= order.shippingAddress.name %></strong><br>
+            <%= order.shippingAddress.landmark || '' %><br>
+            <%= order.shippingAddress.city %>, <%= order.shippingAddress.state %> - <%= order.shippingAddress.pincode %><br>
+            Phone: <%= order.shippingAddress.phone %>
+          </p>
+        </div>
+      </div>
+    </div>
+
+    <div class="col-md-4">
+      <div class="card p-3">
+        <h6>Order Summary</h6>
+        <div class="d-flex justify-content-between">
+          <span>Subtotal</span><span>₹ <%= order.totalPrice %></span>
+        </div>
+        <div class="d-flex justify-content-between">
+          <span>Discount</span><span>₹ <%= order.discount %></span>
+        </div>
+        <div class="d-flex justify-content-between">
+          <span>Taxes</span><span>₹ <%= (order.finalAmount - order.totalPrice + order.discount - (order.shipping || 0)) %></span>
+        </div>
+        <div class="d-flex justify-content-between">
+          <span>Shipping</span><span>₹ <%= order.shipping || 0 %></span>
+        </div>
+        <hr>
+        <div class="d-flex justify-content-between fw-bold">
+          <span>Total</span><span>₹ <%= order.finalAmount %></span>
+        </div>
+
+        <div class="mt-3">
+          <a href="/order/<%= order.orderId %>/invoice" class="btn btn-primary w-100 mb-2" id="downloadInvoiceBtn">Download Invoice</a>
+          <a href="/products" class="btn btn-outline-secondary w-100">Continue Shopping</a>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <% } %>
+</div>
+
+<script>
+document.addEventListener('DOMContentLoaded', () => {
+  const cancelBtn = document.getElementById('cancelBtn');
+  if (!cancelBtn) return;
+
+  cancelBtn.addEventListener('click', async () => {
+    if (!confirm('Are you sure you want to cancel this order?')) return;
+    try {
+      const orderId = '<%= order.orderId %>';
+      const res = await fetch('/order/' + encodeURIComponent(orderId) + '/cancel', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json', 'Accept': 'application/json' },
+        body: JSON.stringify({ reason: 'Cancelled from user order details' })
+      });
+      const data = await res.json();
+      if (res.ok && data.success) {
+        alert('Order cancelled');
+        location.reload();
+      } else {
+        alert(data.message || 'Cancel failed');
+      }
+    } catch (err) {
+      console.error('Cancel error', err);
+      alert('Error cancelling order');
+    }
+  });
+});
+</script>
+
+<%- include('../../views/partials/user/footer') %>

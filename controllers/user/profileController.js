@@ -151,38 +151,98 @@ const postNewPassword = async (req,res) => {
     }
 }
 
-const getUserProfile = async(req,res) => {
+// const getUserProfile = async(req,res) => {
 
-    try {
-        console.log("Get user Profile function invoked..");
-        const userId = req.session.user;
-        console.log("User in the getprofile page",req.session.user);
-        const user = await User.findById(userId).lean();
-        console.log(user);
-        if(!user) return res.redirect("/login");
+//     try {
+//         console.log("Get user Profile function invoked..");
+//         const userId = req.session.user;
+//         console.log("User in the getprofile page",req.session.user);
+//         const user = await User.findById(userId).lean();
+//         console.log(user);
+//         if(!user) return res.redirect("/login");
 
-        const addressDoc = await Address.findOne({ UserId: userId, "address.isActive" : true}).lean();
-        console.log("AddressDoc : ",addressDoc);
-        const addresses = addressDoc?.address || [];
-        console.log("Addresses passing to the profile page : ",addresses);
+//         const addressDoc = await Address.findOne({ UserId: userId, "address.isActive" : true}).lean();
+//         console.log("AddressDoc : ",addressDoc);
+//         const addresses = addressDoc?.address || [];
+//         console.log("Addresses passing to the profile page : ",addresses);
 
-        const orders = await Order.find({address: userId})
+//         const orders = await Order.find({address: userId})
+//         .populate("orderedItems.product")
+//         .sort({createdOn: -1})
+//         .limit(5)
+//         .lean();
+
+//         res.render("userProfile",{
+//             user,
+//             addresses,
+//             orders
+//         });
+       
+//     } catch (error) {
+//         console.log("Error loading userProfile page",error);
+//         res.redirect("/pageNotFound");
+//     }
+// };
+
+
+
+const getUserProfile = async (req, res) => {
+  try {
+    console.log("Get user Profile function invoked..");
+    const userId = req.session.user;
+    console.log("User in the getprofile page", req.session.user);
+    const user = await User.findById(userId).lean();
+    if (!user) return res.redirect("/login");
+
+    const addressDoc = await Address.findOne({ UserId: userId, "address.isActive" : true}).lean();
+    const addresses = addressDoc?.address || [];
+    console.log("Addresses passing to the profile page : ",addresses);
+
+    // FETCH recent orders (latest 3). populate orderedItems.product if you want product names.
+    const recentOrders = await Order.find({ userId: userId })
+      .sort({ createdAt: -1 })
+      .limit(3)
+      .lean();
+
+    console.log("Recent orders: ", recentOrders);
+
+    // optionally, compute a short summary string for each order to display
+    const recentOrdersForView = recentOrders.map(o => {
+      const items = o.orderedItems || [];
+      const itemNames = items.slice(0,2).map(i => {
+        // prefer populated product name or fallback to stored name/price fields
+        const p = i.product || i.productId || {};
+        return p.productName || p.name || (i.name ? i.name : 'Product');
+      });
+      const summary = itemNames.join(', ') + (items.length > 2 ? ` + ${items.length - 2} more` : '');
+      return {
+        orderId: o.orderId,
+        status: o.status,
+        createdAt: o.createdAt,
+        finalAmount: o.finalAmount,
+        summary,
+      };
+    });
+
+    const orders = await Order.find({address: userId})
         .populate("orderedItems.product")
         .sort({createdOn: -1})
         .limit(5)
         .lean();
 
-        res.render("userProfile",{
-            user,
-            addresses,
-            orders
-        });
-       
-    } catch (error) {
-        console.log("Error loading userProfile page",error);
-        res.redirect("/pageNotFound");
-    }
+    res.render("userProfile",{
+        user,
+        addresses,
+        orders,
+        recentOrders: recentOrdersForView // new
+    });
+
+  } catch (error) {
+    console.log("Error loading userProfile page",error);
+    res.redirect("/pageNotFound");
+  }
 };
+
 
 
 const updateUserProfile = async (req,res) => {

@@ -10,6 +10,7 @@ const { uploadProductImages, uploadProfileImage } = require('../helpers/multer')
 const cartController = require('../controllers/user/cartController')
 const wishlistController = require("../controllers/user/wishlistController");
 const checkoutController = require("../controllers/user/checkoutController");
+const orderController = require("../controllers/user/orderController");
 const addressController = require("../controllers/user/addressController");
 
 router.get("/",userController.loadHomepage);
@@ -69,9 +70,16 @@ router.post('/addToCart',userAuth ,cartController.addToCart);
 router.post('/cart/update',userAuth,cartController.updateCartItem);
 router.get('/cart/remove/:productId',userAuth,cartController.removeFromCart);
 
-// checkout Management
+// Checkout & Order Management
 
 router.get("/checkout",userAuth,checkoutController.getcheckoutPage);
+router.post('/place-order', userAuth, orderController.placeOrder);
+router.get('/orderSuccess/:orderId', userAuth,orderController.getOrderSuccess);
+router.get('/orders', userAuth, orderController.listOrders);
+router.get('/order/:orderId',userAuth,orderController.getOrderDetails);
+router.post('/order/:orderId/cancel', userAuth, orderController.cancelOrder);
+router.get('/order/:orderId/invoice', userAuth,orderController.getInvoice);
+router.get('/orders/statuses', userAuth, orderController.getOrderStatuses);
 
 
 // Error Management

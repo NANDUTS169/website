@@ -1,0 +1,54 @@
+<%- include('../../views/partials/user/header') %>
+
+<div class="container my-4">
+  <div class="d-flex justify-content-between align-items-center mb-3">
+    <h4>Your Orders</h4>
+    <form id="searchForm" class="d-flex" method="get" action="/orders">
+      <input type="text" name="q" id="q" class="form-control me-2" placeholder="Search by order id or status" value="<%= q %>">
+      <button class="btn btn-primary">Search</button>
+    </form>
+  </div>
+
+  <% if (!orders || orders.length === 0) { %>
+    <div class="alert alert-info">No orders found.</div>
+  <% } else { %>
+    <div class="list-group">
+      <% orders.forEach(o => { %>
+        <div class="list-group-item d-flex justify-content-between align-items-center">
+          <div>
+            <a href="/order/<%= o.orderId %>" class="fw-bold">Order: <%= o.orderId %></a>
+            <div class="small text-muted">Placed: <%= new Date(o.createdAt).toLocaleString() %> • Items: <%= o.itemsCount %></div>
+            <div class="mt-1">Status: <span class="badge <%= (o.status || '').toLowerCase().replace(/\s+/g,'-') %>"><%= o.status %></span></div>
+          </div>
+
+          <div class="text-end">
+            <div>₹ <%= o.finalAmount %></div>
+            <div class="mt-2">
+              <!-- Download invoice if you implemented invoice route -->
+              <a href="/order/<%= o.orderId %>/invoice" class="btn btn-sm btn-outline-primary me-1">Invoice</a>
+
+              <!-- Details navigates to same order detail page you already created -->
+              <a href="/order/<%= o.orderId %>" class="btn btn-sm btn-outline-secondary">Details</a>
+            </div>
+          </div>
+        </div>
+      <% }) %>
+    </div>
+
+    <!-- pagination -->
+    <% if (pages > 1) { %>
+      <nav class="mt-3">
+        <ul class="pagination">
+          <% for(let p = 1; p <= pages; p++) { %>
+            <li class="page-item <%= p === page ? 'active' : '' %>">
+              <a class="page-link" href="/orders?q=<%= encodeURIComponent(q) %>&page=<%= p %>"><%= p %></a>
+            </li>
+          <% } %>
+        </ul>
+      </nav>
+    <% } %>
+
+  <% } %>
+</div>
+
+<%- include('../../views/partials/user/footer') %>

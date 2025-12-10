@@ -13,7 +13,6 @@ const uploads = multer({storage:storage});
 
 const { uploadRawImages , uploadProductImages } = require('../helpers/multer');
 
-
 // Admin login Management
 router.get("/login",adminController.loadLogin);
 router.post("/login",adminController.login);
@@ -37,9 +36,7 @@ router.post("/editCategory/:id",adminAuth,categoryController.editCategory);
 
 // Brand Management
 router.get("/brands",adminAuth,brandController.getBrandPage);
-
-// router.post("/addBrand",adminAuth,uploads.single("image"),brandController.addBrand);
-
+router.post("/addBrand",adminAuth,uploads.single("image"),brandController.addBrand);
 router.get("/blockBrand",adminAuth,brandController.blockBrand);
 router.get("/unblockBrand",adminAuth,brandController.unblockBrand);
 router.get("/deleteBrand",adminAuth,brandController.deleteBrand);
@@ -62,14 +59,10 @@ router.post("/editProduct/:id",adminAuth,uploadProductImages.array("images",4),p
 router.post("/deleteImage",adminAuth,productController.deleteSingleImage);
 
 // Order Management
-router.get("/orderlist",adminAuth,orderController.getOrderList);
-
-router.get("/dashboard", (req, res) => {
-    res.redirect("/admin/");
-});
-
-router.get("/pageerror",adminController.pageerror);
-
+router.get("/orderlist", adminAuth, orderController.listOrders);
+router.get("/order/:id",adminAuth, orderController.getOrderDetail);
+router.post("/order/:id/status", adminAuth, orderController.updateStatus);
+router.post("order/:id/return-verify", adminAuth, orderController.verifyReturn);
 
 module.exports = router;
 

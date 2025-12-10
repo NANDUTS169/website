@@ -297,6 +297,15 @@
         .row.g-3 > * {
             margin-bottom: 1rem;
         }
+        
+        /* add to your site CSS */
+        .status-pending { background:#ffc107; color:#000; }
+        .status-processing { background:#17a2b8; color:#fff; } 
+        .status-shipped { background:#0d6efd; color:#fff; }
+        .status-delivered { background:#198754; color:#fff; }
+        .status-cancelled { background:#dc3545; color:#fff; }
+        .status-return-requested { background:#fd7e14; color:#fff; }
+
 
     </style>
     <link href="https://cdnjs.cloudflare.com/ajax/libs/bootstrap/5.3.0/css/bootstrap.min.css" rel="stylesheet">
@@ -394,75 +403,48 @@
             
             <!-- Orders Section -->
             <div class="col-lg-6">
-                <div class="card">
-                    <div class="card-header">
-                        <h5 class="mb-0"><i class="fas fa-shopping-bag me-2"></i>Recent Orders</h5>
-                    </div>
-                    <div class="card-body">
-                        <div id="ordersList">
-                            <div class="order-item" data-order-id="12345">
-                                <div class="d-flex justify-content-between align-items-center">
-                                    <div>
-                                        <h6 class="mb-1">Order #12345</h6>
-                                        <p class="mb-1 text-muted">Wireless Headphones, Smartphone Case</p>
-                                        <small class="text-muted">
-                                            <i class="fas fa-calendar me-1"></i>Placed on: Dec 15, 2024 | 
-                                            <i class="fas fa-dollar-sign me-1"></i>$129.99
-                                        </small>
-                                    </div>
-                                    <div class="text-end">
-                                        <span class="order-status status-delivered">Delivered</span>
-                                        <div class="mt-2">
-                                            <button class="btn btn-sm btn-outline-primary">Track</button>
-                                        </div>
-                                    </div>
-                                </div>
-                            </div>
+            <div class="card">
+            <div class="card-header">
+            <h5 class="mb-0"><i class="fas fa-shopping-bag me-2"></i>Recent Orders</h5>
+            </div>
 
-                            <div class="order-item" data-order-id="12346">
-                                <div class="d-flex justify-content-between align-items-center">
-                                    <div>
-                                        <h6 class="mb-1">Order #12346</h6>
-                                        <p class="mb-1 text-muted">Laptop Stand, USB Cable</p>
-                                        <small class="text-muted">
-                                            <i class="fas fa-calendar me-1"></i>Placed on: Dec 20, 2024 | 
-                                            <i class="fas fa-dollar-sign me-1"></i>$89.50
-                                        </small>
-                                    </div>
-                                    <div class="text-end">
-                                        <span class="order-status status-pending">Pending</span>
-                                        <div class="mt-2">
-                                            <button class="btn btn-sm btn-outline-danger" onclick="cancelOrder('12346')">Cancel</button>
-                                        </div>
-                                    </div>
-                                </div>
-                            </div>
+            <div class="card-body">
+            <div id="ordersList">
+            <% if (!recentOrders || recentOrders.length === 0) { %>
+            <div class="text-center text-muted">No recent orders</div>
+            <% } else { %>
+            <% recentOrders.forEach(function(o) { %>
+            <div class="order-item mb-3" data-order-id="<%= o.orderId %>">
+            <div class="d-flex justify-content-between align-items-center">
+            <div>
+                <h6 class="mb-1">Order #<%= o.orderId %></h6>
+                <p class="mb-1 text-muted"><%= o.summary %></p>
+                <small class="text-muted">
+                <i class="fas fa-calendar me-1"></i>Placed on: <%= new Date(o.createdAt).toLocaleDateString() %> |
+                <i class="fas fa-rupee-sign me-1"></i><%= o.finalAmount %>
+                </small>
+            </div>
 
-                            <div class="order-item" data-order-id="12347">
-                                <div class="d-flex justify-content-between align-items-center">
-                                    <div>
-                                        <h6 class="mb-1">Order #12347</h6>
-                                        <p class="mb-1 text-muted">Gaming Mouse, Keyboard</p>
-                                        <small class="text-muted">
-                                            <i class="fas fa-calendar me-1"></i>Placed on: Dec 22, 2024 | 
-                                            <i class="fas fa-dollar-sign me-1"></i>$156.00
-                                        </small>
-                                    </div>
-                                    <div class="text-end">
-                                        <span class="order-status status-shipped">Shipped</span>
-                                        <div class="mt-2">
-                                            <button class="btn btn-sm btn-outline-primary">Track</button>
-                                        </div>
-                                    </div>
-                                </div>
-                            </div>
-                        </div>
-                        <div class="text-center mt-3">
-                            <a href="#" class="btn btn-outline-secondary">View All Orders</a>
-                        </div>
-                    </div>
+            <div class="text-end">
+                <span class="order-status badge status-<%= (o.status || '').toLowerCase().replace(/\s+/g,'-') %>"><%= o.status %></span>
+                <div class="mt-2">
+                    <button class="btn btn-sm btn-outline-primary ms-1" onclick="location.href='/order/<%= o.orderId %>'">View Details</button>
                 </div>
             </div>
+            </div>
+            </div>
+            <% }) %>
+            <% } %>
+            </div>
+
+            <div class="text-center mt-3">
+            <a href="/orders" class="btn btn-outline-secondary" id="viewAllOrdersBtn">View All Orders</a>
+            </div>
+            </div>
+            </div>
+            </div>
+
+
         </div>
     </div>
 
@@ -1497,8 +1479,83 @@ async function updateAddress() {
   }
 }
 
+</script>
 
+<script>
+  (function() {
+    // read current order IDs from DOM
+    function getRecentOrderIds() {
+      const nodes = document.querySelectorAll('#ordersList .order-item');
+      return Array.from(nodes).map(n => n.dataset.orderId).filter(Boolean);
+    }
 
+    // update DOM statuses based on returned map { orderId: {status, finalAmount} }
+    function updateStatuses(map) {
+      for (const orderId in map) {
+        const node = document.querySelector(`#ordersList .order-item[data-order-id="${orderId}"]`);
+        if (!node) continue;
+        const statusEl = node.querySelector('.order-status');
+        if (statusEl) {
+          statusEl.textContent = map[orderId].status || statusEl.textContent;
+          // update classes: remove old status-* then add new
+          statusEl.className = 'order-status badge';
+          const cls = 'status-' + (map[orderId].status || '').toLowerCase().replace(/\s+/g,'-');
+          statusEl.classList.add(cls);
+        }
+        // optionally update amount displayed
+        const amountSpan = node.querySelector('.text-muted i.fa-rupee-sign')?.parentElement;
+        if (amountSpan) {
+          // replace trailing amount after last pipe
+          // simplest approach: find the small element and replace its text entirely
+          const small = node.querySelector('small.text-muted');
+          if (small) {
+            const parts = small.innerText.split('|');
+            if (parts.length >= 2) {
+              parts[1] = ' ₹' + (map[orderId].finalAmount ?? '').toString();
+              small.innerText = parts.join('|');
+            }
+          }
+        }
+      }
+    }
+
+    // fetch statuses for displayed orders
+    async function fetchAndUpdateStatuses() {
+      const ids = getRecentOrderIds();
+      if (!ids.length) return;
+      try {
+        const res = await fetch('/orders/statuses?ids=' + encodeURIComponent(ids.join(',')), { headers: { 'Accept': 'application/json' }});
+        if (!res.ok) {
+          console.warn('Failed to fetch statuses', res.status);
+          return;
+        }
+        const json = await res.json();
+        if (json && json.success) {
+          updateStatuses(json.data || {});
+        }
+      } catch (err) {
+        console.error('Status polling error', err);
+      }
+    }
+
+    // attach track button handlers and initial polling
+    document.addEventListener('DOMContentLoaded', () => {
+      // attach track click
+      document.querySelectorAll('.track-btn').forEach(btn => {
+        btn.addEventListener('click', (e) => {
+          const oid = btn.dataset.orderId;
+          // navigate to details page (view tracking as order detail)
+          window.location.href = '/order/' + encodeURIComponent(oid);
+        });
+      });
+
+      // initial fetch
+      fetchAndUpdateStatuses();
+
+      // poll every 15s
+      setInterval(fetchAndUpdateStatuses, 15000);
+    });
+  })();
 </script>
 
 

@@ -1,0 +1,32 @@
+
+<%- include('../../views/partials/user/header')%>
+
+<div class="container text-center my-5">
+  <img src="/images/order-success.svg" alt="Order placed" style="max-width:260px" />
+  <h2 class="mt-4">Thank you — your order is placed!</h2>
+
+  <% if (notFound) { %>
+    <p class="text-danger">Order <%= orderId %> not found.</p>
+  <% } else if (forbidden) { %>
+    <p class="text-danger">You do not have permission to view this order.</p>
+  <% } else { %>
+    <p class="mb-3">Your order ID: <strong><%= orderId %></strong></p>
+    <p>Placed on: <%= order.displayDate %></p>
+
+    <h5 class="mt-3">Items</h5>
+    <ul class="list-unstyled">
+      <% order.itemsForView.forEach(function(it){ %>
+        <li>
+          <strong><%= it.name %></strong> — <%= it.qty %> x ₹ <%= it.unitPrice %> = ₹ <%= it.itemTotal %>
+        </li>
+      <% }) %>
+    </ul>
+
+    <div class="d-flex justify-content-center gap-2 mt-4">
+      <a href="/order/<%= orderId %>" class="btn btn-primary">View Order Details</a>
+      <a href="/products" class="btn btn-outline-secondary">Continue Shopping</a>
+    </div>
+  <% } %>
+</div>
+
+<%- include('../../views/partials/user/footer')%>

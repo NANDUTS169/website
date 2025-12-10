@@ -1,0 +1,178 @@
+<%- include('../../views/partials/admin/header') %>
+
+
+<section class="content-main">
+  <div class="content-header d-flex justify-content-between align-items-center">
+    <div>
+      <h2 class="content-title card-title">Order List</h2>
+      <p class="text-muted">All orders — newest first</p>
+    </div>
+
+    <div style="min-width: 300px;">
+      <form id="topSearchForm" method="get" action="/admin/orderlist" class="d-flex">
+        <input name="search" type="text" placeholder="Search order ID / name / email" class="form-control me-2" value="<%= query && query.search ? query.search : '' %>" />
+        <button class="btn btn-primary" type="submit">Search</button>
+        <a href="/admin/orderlist" class="btn btn-light ms-2">Clear</a>
+      </form>
+    </div>
+  </div>
+
+  <div class="card mb-4">
+    <header class="card-header border-0">
+      <form id="filterForm" method="get" action="/admin/orderlist">
+        <div class="row gx-3 gy-2 align-items-center">
+          <div class="col-lg-4 col-md-6">
+            <input name="search" type="text" placeholder="Search by order id, name, product..." class="form-control" value="<%= query && query.search ? query.search : '' %>" />
+          </div>
+
+          <div class="col-lg-2 col-md-3">
+            <select name="status" class="form-select">
+              <option value="">All status</option>
+              <option value="Pending" <%= query && query.status === 'Pending' ? 'selected' : '' %>>Pending</option>
+              <option value="Processing" <%= query && query.status === 'Processing' ? 'selected' : '' %>>Processing</option>
+              <option value="Shipped" <%= query && query.status === 'Shipped' ? 'selected' : '' %>>Shipped</option>
+              <option value="Delivered" <%= query && query.status === 'Delivered' ? 'selected' : '' %>>Delivered</option>
+              <option value="Cancelled" <%= query && query.status === 'Cancelled' ? 'selected' : '' %>>Cancelled</option>
+              <option value="Return Requested" <%= query && query.status === 'Return Requested' ? 'selected' : '' %>>Return Requested</option>
+              <option value="Returned" <%= query && query.status === 'Returned' ? 'selected' : '' %>>Returned</option>
+            </select>
+          </div>
+
+          <div class="col-lg-2 col-md-3">
+            <select name="limit" class="form-select">
+              <option value="10" <%= (query && (parseInt(query.limit) || 10)) === 10 ? 'selected' : '' %>>Show 10</option>
+              <option value="20" <%= query && parseInt(query.limit) === 20 ? 'selected' : '' %>>Show 20</option>
+              <option value="50" <%= query && parseInt(query.limit) === 50 ? 'selected' : '' %>>Show 50</option>
+            </select>
+          </div>
+
+          <div class="col-auto">
+            <button class="btn btn-primary">Apply</button>
+            <a href="/admin/orderlist" class="btn btn-light ms-2">Reset</a>
+          </div>
+        </div>
+      </form>
+    </header>
+
+    <div class="card-body">
+      <div class="table-responsive">
+        <table class="table table-hover align-middle">
+          <thead>
+            <tr>
+              <th>#OrderID</th>
+              <th>Customer</th>
+              <th>Email / Phone</th>
+              <th>Items</th>
+              <th class="text-end">Total</th>
+              <th>Status</th>
+              <th>Date</th>
+              <th class="text-end">Action</th>
+            </tr>
+          </thead>
+          <tbody>
+            <% if (!orders || orders.length === 0) { %>
+              <tr>
+                <td colspan="8" class="text-center text-muted">No orders found</td>
+              </tr>
+            <% } else { %>
+              <% orders.forEach(function(order) { %>
+                <tr>
+                  <td><%= order.orderId %></td>
+                  <td>
+                    <strong>
+                      <%= order.userId && order.userId.name ? order.userId.name : (order.shippingAddress && order.shippingAddress.name ? order.shippingAddress.name : 'Guest') %>
+                    </strong>
+                  </td>
+                  <td>
+                    <div><%= order.userId && order.userId.email ? order.userId.email : (order.shippingAddress && order.shippingAddress.phone ? order.shippingAddress.phone : '') %></div>
+                    <div class="text-muted small">
+                      <%= order.userId && order.userId.phone ? order.userId.phone : (order.shippingAddress && order.shippingAddress.phone ? order.shippingAddress.phone : '') %>
+                    </div>
+                  </td>
+                  <td><%= (order.orderedItems && order.orderedItems.length) ? order.orderedItems.length : 0 %></td>
+                  <td class="text-end">₹<%= ((order.finalAmount || order.totalPrice) || 0).toFixed(2) %></td>
+                  <td>
+                    <% 
+                      var st = order.status || '';
+                      var badgeClass = 'alert-secondary';
+                      if (st === 'Pending') badgeClass = 'alert-warning';
+                      else if (st === 'Cancelled') badgeClass = 'alert-danger';
+                      else if (st === 'Delivered' || st === 'Returned') badgeClass = 'alert-success';
+                      else badgeClass = 'alert-info';
+                    %>
+                    <span class="badge rounded-pill <%= badgeClass %>"><%= st %></span>
+                  </td>
+                  <td><%= new Date(order.createdAt || order.invoiceDate || Date.now()).toLocaleString() %></td>
+                  <td class="text-end">
+                    <a href="/admin/order/<%= order._id %>" class="btn btn-sm btn-primary">Detail</a>
+                  </td>
+                </tr>
+              <% }); %>
+            <% } %>
+          </tbody>
+        </table>
+      </div>
+    </div>
+
+    <!-- Pagination -->
+    <div class="card-footer border-0">
+      <div class="pagination-area mt-15 mb-0">
+        <nav>
+          <ul class="pagination justify-content-start">
+            <% 
+              // build safe query-string for pagination links
+              var currentQuery = {};
+              if (typeof query !== 'undefined' && query) {
+                for (var k in query) {
+                  if (Object.prototype.hasOwnProperty.call(query, k)) {
+                    currentQuery[k] = query[k];
+                  }
+                }
+              }
+              var totalPages = (typeof pages === 'number' && pages > 0) ? pages : 1;
+              var currentPage = (typeof page === 'number') ? page : parseInt(currentQuery.page) || 1;
+            %>
+
+            <% for (var p = 1; p <= totalPages; p++) { %>
+              <% 
+                // clone query and set page
+                var qs = {};
+                for (var qk in currentQuery) {
+                  if (Object.prototype.hasOwnProperty.call(currentQuery, qk) && currentQuery[qk] !== undefined && currentQuery[qk] !== '') {
+                    qs[qk] = currentQuery[qk];
+                  }
+                }
+                qs.page = p;
+                // build query string manually
+                var arr = [];
+                for (var a in qs) {
+                  if (Object.prototype.hasOwnProperty.call(qs, a) && qs[a] !== undefined && qs[a] !== '') {
+                    arr.push(encodeURIComponent(a) + '=' + encodeURIComponent(qs[a]));
+                  }
+                }
+                var href = '?' + arr.join('&');
+              %>
+              <li class="page-item <%= (p === currentPage) ? 'active' : '' %>">
+                <a class="page-link" href="<%= href %>"><%= p %></a>
+              </li>
+            <% } %>
+          </ul>
+        </nav>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- small script: allow pressing enter in top search to submit -->
+<script>
+  (function(){
+    var topForm = document.getElementById('topSearchForm');
+    if(topForm) {
+      topForm.addEventListener('submit', function(e){
+        // straightforward submit
+      });
+    }
+  })();
+</script>
+
+<%- include('../../views/partials/admin/footer') %>

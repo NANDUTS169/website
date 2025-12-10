@@ -36,9 +36,7 @@ const getUserProductList = async (req, res) => {
     else if (sort === "newest") sortOption.createdOn = -1;
 
     const products = await Product.find(query).sort(sortOption);
-    console.log("products passed to the products page frontend",products);
     const categories = await Category.find({ isListed: true });
-    console.log("categories passed to the products page frontend",categories);
 
     // If AJAX -> return JSON
     if (req.xhr || req.headers.accept.indexOf("json") > -1) {

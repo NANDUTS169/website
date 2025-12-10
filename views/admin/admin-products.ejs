@@ -36,7 +36,7 @@
             <tr>
                 <td><%=data[i].productName%></td>
                 <td><%=data[i].brand%></td>
-                <td><%=data[i].category.name%></td>
+                <td><%=data[i].category?.name%></td>
                 <td><%=data[i].salePrice%></td>
                 <td>
                     <%if(locals.data[i].productOffer){%>
