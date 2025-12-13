@@ -32,53 +32,79 @@
         </div>
       </div>
     </div>
+    
+    
+    <script>
+        const urlParams = new URLSearchParams(window.location.search);
+        const errorMsg = urlParams.get('error');
+        if(errorMsg) {
+             document.write(`<div class="alert alert-danger text-center w-100">${errorMsg}</div>`);
+        }
+    </script>
+
 
     <!-- Cart Items -->
     <div class="row row-pb-lg">
       <div class="col-md-12">
         <div class="product-name d-flex">
-          <div class="one-forth text-left px-4"><span>Product Details</span></div>
-          <div class="one-eight text-center"><span>Price</span></div>
-          <div class="one-eight text-center"><span>Quantity</span></div>
-          <div class="one-eight text-center"><span>Total</span></div>
-          <div class="one-eight text-center px-4"><span>Remove</span></div>
+          <div class="col-6 px-4"><span>Product Details</span></div>
+          <div class="col-2 text-center"><span>Price</span></div>
+          <div class="col-2 text-center"><span>Quantity</span></div>
+          <div class="col-2 text-center"><span>Total/Remove</span></div>
         </div>
 
         <% if (cart && cart.items.length > 0) { %>
           <% cart.items.forEach(item => { %>
-            <div class="product-cart d-flex align-items-center">
+            <div class="product-cart d-flex align-items-center" id="item-row-<%= item._id %>">
               <!-- Product -->
-              <div class="one-forth d-flex align-items-center">
-                <div class="product-img"
-                  style="background-image: url('/uploads/product-images/<%= item.productId.productImage[0] %>');">
-                </div>
+              <div class="col-6 d-flex align-items-center">
+                <div class="product-img" style="background-image: url('/uploads/product-images/<%= item.productId.productImage[0] %>'); width: 80px; height: 80px; background-size: cover; border-radius: 5px; min-width: 80px;"></div>
                 <div class="display-tc px-3">
-                  <h5><%= item.productId.productName %></h5>
+                  <h5 class="mb-1 <%= (item.productId && item.productId.isBlocked) ? 'text-danger' : '' %>">
+                      <%= item.productId ? item.productId.productName : 'Product Unavailable' %>
+                  </h5>
+                  <% if (item.size) { %>
+                    <p class="text-muted mb-0 small">Size: <%= item.size %></p>
+                  <% } %>
+                  <% if (item.productId && item.productId.isBlocked) { %>
+                      <span class="badge badge-danger text-danger bg-light border border-danger">Unavailable</span>
+                  <% } %>
                 </div>
               </div>
 
               <!-- Price -->
-              <div class="one-eight text-center">
+              <div class="col-2 text-center">
                 <span class="price">₹<%= item.price.toFixed(2) %></span>
               </div>
 
               <!-- Quantity -->
-              <div class="one-eight text-center">
-                <input type="number"
-                  class="form-control text-center"
-                  min="1" max="5"
-                  value="<%= item.quantity %>"
-                  onchange="updateQuantity('<%= item.productId._id %>', this.value)">
+              <div class="col-2 text-center">
+                <div class="d-flex justify-content-center align-items-center input-group input-group-sm">
+                    <button class="btn btn-outline-secondary btn-sm" 
+                        id="btn-minus-<%= item._id %>"
+                        onclick="updateQuantity('<%= item._id %>', '<%= item.quantity - 1 %>')"
+                        <%= item.quantity <= 1 ? 'disabled' : '' %>>-</button>
+                    
+                    <input type="text" 
+                        id="qty-<%= item._id %>"
+                        class="form-control text-center mx-1" 
+                        style="width: 40px; padding: 0; height: 30px;" 
+                        value="<%= item.quantity %>" 
+                        readonly>
+                    
+                    <button class="btn btn-outline-secondary btn-sm" 
+                        id="btn-plus-<%= item._id %>"
+                        onclick="updateQuantity('<%= item._id %>', '<%= item.quantity + 1 %>')"
+                        <%= item.quantity >= 5 ? 'disabled' : '' %>>+</button>
+                </div>
               </div>
 
-              <!-- Total -->
-              <div class="one-eight text-center">
-                <span class="price">₹<%= item.totalPrice.toFixed(2) %></span>
-              </div>
-
-              <!-- Remove -->
-              <div class="one-eight text-center">
-                <a href="/cart/remove/<%= item.productId._id %>" class="btn btn-sm btn-outline-danger">✕</a>
+              <!-- Total & Remove -->
+              <div class="col-2 text-center d-flex flex-column justify-content-center align-items-center">
+                <span class="price mb-2" id="total-<%= item._id %>">₹<%= item.totalPrice.toFixed(2) %></span>
+                <button onclick="removeItem('<%= item._id %>')" class="btn btn-sm btn-outline-danger" title="Remove Item">
+                    <i class="icon-trash"></i> Remove
+                </button>
               </div>
             </div>
           <% }) %>
@@ -103,13 +129,13 @@
             <div class="col-sm-4 text-center">
               <div class="total">
                 <div class="sub">
-                  <p><span>Subtotal:</span> <span>₹<%= subtotal.toFixed(2) %></span></p>
+                  <p><span>Subtotal:</span> <span id="cart-subtotal">₹<%= subtotal.toFixed(2) %></span></p>
                   <p><span>Delivery:</span> <span>₹0.00</span></p>
                   <p><span>Discount:</span> <span>₹<%= discount.toFixed(2) %></span></p>
                 </div>
                 <div class="grand-total">
                   <p><span><strong>Total:</strong></span>
-                    <span>₹<%= grandTotal.toFixed(2) %></span></p>
+                    <span id="cart-grand-total">₹<%= grandTotal.toFixed(2) %></span></p>
                 </div>
                 <a href="/checkout" class="btn btn-success mt-3">Proceed to Checkout</a>
               </div>
@@ -126,23 +152,110 @@
 <%- include("../../views/partials/user/footer") %>
 
 <!-- Scripts -->
+<script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
 <script>
-  async function updateQuantity(productId, quantity) {
+  const Toast = Swal.mixin({
+    toast: true,
+    position: 'top-end',
+    showConfirmButton: false,
+    timer: 3000,
+    timerProgressBar: true,
+    didOpen: (toast) => {
+      toast.addEventListener('mouseenter', Swal.stopTimer)
+      toast.addEventListener('mouseleave', Swal.resumeTimer)
+    }
+  });
+
+  async function updateQuantity(itemId, quantity, btn) {
     try {
       const res = await fetch("/cart/update", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ productId, quantity })
+        body: JSON.stringify({ itemId, quantity })
       });
 
       const data = await res.json();
       if (data.success) {
-        location.reload();
+        // Update DOM elements dynamically
+        document.getElementById(`total-${itemId}`).innerText = "₹" + data.itemTotal.toFixed(2);
+        document.getElementById(`cart-subtotal`).innerText = "₹" + data.subtotal.toFixed(2);
+        document.getElementById(`cart-grand-total`).innerText = "₹" + data.grandTotal.toFixed(2);
+        
+        // Update input value and button states
+        const input = document.getElementById(`qty-${itemId}`);
+        if(input) input.value = quantity;
+        
+        // Update buttons state
+        const minusBtn = document.getElementById(`btn-minus-${itemId}`);
+        const plusBtn = document.getElementById(`btn-plus-${itemId}`);
+        
+        if(minusBtn) minusBtn.disabled = quantity <= 1;
+        if(plusBtn) plusBtn.disabled = quantity >= 5;
+        
+        // Update onclick handlers to reflect new quantity for next click
+        if (minusBtn) minusBtn.setAttribute('onclick', `updateQuantity('${itemId}', '${parseInt(quantity) - 1}')`);
+        if (plusBtn) plusBtn.setAttribute('onclick', `updateQuantity('${itemId}', '${parseInt(quantity) + 1}')`);
+
       } else {
-        alert(data.message);
+        Toast.fire({
+          icon: 'error',
+          title: data.message
+        });
       }
     } catch (err) {
       console.error("Error updating qty:", err);
+      Toast.fire({
+        icon: 'error',
+        title: 'Failed to update quantity'
+      });
     }
+  }
+
+  async function removeItem(itemId) {
+    Swal.fire({
+      title: 'Are you sure?',
+      text: "You won't be able to revert this!",
+      icon: 'warning',
+      showCancelButton: true,
+      confirmButtonColor: '#3085d6',
+      cancelButtonColor: '#d33',
+      confirmButtonText: 'Yes, remove it!'
+    }).then(async (result) => {
+      if (result.isConfirmed) {
+        try {
+          const res = await fetch(`/cart/remove/${itemId}`, { method: 'DELETE' });
+          const data = await res.json();
+          
+          if (data.success) {
+          
+             Toast.fire({ icon: 'success', title: data.message || "Item removed successfully" });
+
+             const row = document.getElementById(`item-row-${itemId}`);
+             if (row) row.remove();
+             
+            
+             const remainingRows = document.querySelectorAll('.product-cart');
+             if (remainingRows.length === 0) {
+               
+                 setTimeout(() => location.reload(), 1500);
+             } else {
+                
+                 if (data.subtotal !== undefined) {
+                     const subEl = document.getElementById('cart-subtotal');
+                     const grandEl = document.getElementById('cart-grand-total');
+                     if(subEl) subEl.innerText = "₹" + data.subtotal.toFixed(2);
+                     if(grandEl) grandEl.innerText = "₹" + data.grandTotal.toFixed(2);
+                 }
+             }
+             
+          } else {
+             Toast.fire({ icon: 'error', title: data.message || "Failed to remove item" });
+          }
+        } catch (err) {
+           console.error(err);
+           Toast.fire({ icon: 'error', title: "Error removing item" });
+        }
+      }
+    });
   }
 </script>

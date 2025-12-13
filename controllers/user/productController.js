@@ -7,7 +7,9 @@ const User = require("../../models/userSchema");
 
 const getUserProductList = async (req, res) => {
   try {
-    const { search, category, minPrice, maxPrice, sort } = req.query;
+    const { search, category, minPrice, maxPrice, sort, page = 1 } = req.query;
+    const limit = 10;
+    const skip = (parseInt(page) - 1) * limit;
 
     let query = {
       isBlocked: false,
@@ -35,16 +37,40 @@ const getUserProductList = async (req, res) => {
     else if (sort === "price_desc") sortOption.salePrice = -1;
     else if (sort === "newest") sortOption.createdOn = -1;
 
-    const products = await Product.find(query).sort(sortOption);
+    const totalProducts = await Product.countDocuments(query);
+    const totalPages = Math.ceil(totalProducts / limit);
+
+    const products = await Product.find(query)
+      .sort(sortOption)
+      .skip(skip)
+      .limit(limit);
+
     const categories = await Category.find({ isListed: true });
+
+    const pagination = {
+      currentPage: parseInt(page),
+      totalPages: totalPages,
+      totalProducts: totalProducts,
+      hasPrevPage: parseInt(page) > 1,
+      hasNextPage: parseInt(page) < totalPages
+    };
 
     // If AJAX -> return JSON
     if (req.xhr || req.headers.accept.indexOf("json") > -1) {
-      return res.json({ products, categories }); 
+      return res.json({ products, categories, pagination });
     }
 
     // Normal render
-    res.render("products", { products, categories, search, category, minPrice, maxPrice, sort });
+    res.render("products", {
+      products,
+      categories,
+      search,
+      category,
+      minPrice,
+      maxPrice,
+      sort,
+      pagination
+    });
   } catch (error) {
     console.error("Error loading products page:", error);
     res.redirect("/pageerror");
@@ -54,38 +80,38 @@ const getUserProductList = async (req, res) => {
 
 
 const getProductDetailPage = async (req, res) => {
-    try {
-        const productId = req.params.id;
+  try {
+    const productId = req.params.id;
 
-        const product = await Product.findById(productId).populate("category");
+    const product = await Product.findById(productId).populate("category");
 
-        if (!product) {
-            return res.redirect("/pageNotFound");
-        }
-
-        let relatedProducts = await Product.find({
-            category: product.category._id,
-            _id: { $ne: product._id },
-            isBlocked: false
-        }).limit(4);
-
-        if (!relatedProducts || relatedProducts.length === 0) {
-            console.log("No related products found");
-            relatedProducts = await Product.find({ isBlocked: false })
-                .sort({ createdAt: -1 })
-                .limit(4);
-        }
-
-        res.render("product-detail", { product, relatedProducts });
-
-    } catch (error) {
-        console.error("Product detail page error:", error);
-        res.redirect("/pageNotFound");
+    if (!product) {
+      return res.redirect("/pageNotFound");
     }
+
+    let relatedProducts = await Product.find({
+      category: product.category._id,
+      _id: { $ne: product._id },
+      isBlocked: false
+    }).limit(4);
+
+    if (!relatedProducts || relatedProducts.length === 0) {
+      console.log("No related products found");
+      relatedProducts = await Product.find({ isBlocked: false })
+        .sort({ createdAt: -1 })
+        .limit(4);
+    }
+
+    res.render("product-detail", { product, relatedProducts });
+
+  } catch (error) {
+    console.error("Product detail page error:", error);
+    res.redirect("/pageNotFound");
+  }
 };
 
 
-module.exports = { 
-    getUserProductList,
-    getProductDetailPage,
+module.exports = {
+  getUserProductList,
+  getProductDetailPage,
 }

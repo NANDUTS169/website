@@ -41,30 +41,53 @@
       <div id="description-error" class="error-message"></div>
     </div>
 
-    <!-- Prices & Quantity -->
-    <div class="row">
-      <div class="col-md-4 mb-3">
-        <label class="form-label">Regular Price</label>
-        <input type="text" name="regularPrice" value="<%= product.regularPrice %>" class="form-control">
-        <div id="regularPrice-error" class="error-message"></div>
-      </div>
-      <div class="col-md-4 mb-3">
-        <label class="form-label">Sale Price</label>
-        <input type="text" name="salePrice" value="<%= product.salePrice %>" class="form-control">
-        <div id="salePrice-error" class="error-message"></div>
-      </div>
-      <div class="col-md-4 mb-3">
-        <label class="form-label">Quantity</label>
-        <input type="text" name="quantity" value="<%= product.quantity %>" class="form-control">
-        <div id="quantity-error" class="error-message"></div>
-      </div>
-    </div>
+    <!-- Base Quantity and Prices removed - managed via variants -->
+
 
     <!-- Color -->
     <div class="mb-3">
       <label class="form-label">Color</label>
       <input type="text" name="color" value="<%= product.color %>" class="form-control">
       <div id="color-error" class="error-message"></div>
+    </div>
+    
+    <!-- Variant Management -->
+    <div class="card mb-4">
+        <div class="card-header">
+            <h4>Product Variants (Sizes)</h4>
+        </div>
+        <div class="card-body">
+            <div id="variants-container">
+                <% if (product.variants && product.variants.length > 0) { %>
+                    <% product.variants.forEach((variant, index) => { %>
+                        <div class="row mb-3 variant-row" id="variant-row-existing-<%= index %>">
+                            <div class="col-lg-3">
+                                <label class="form-label">Size</label>
+                                <input type="text" name="variantSize[]" value="<%= variant.size %>" placeholder="Size (e.g. S, M, 42)" class="form-control" required>
+                            </div>
+                            <div class="col-lg-3">
+                                <label class="form-label">Quantity</label>
+                                <input type="number" name="variantQuantity[]" value="<%= variant.quantity %>" placeholder="Quantity" class="form-control" min="0" required>
+                            </div>
+                            <div class="col-lg-3">
+                                <label class="form-label">Regular Price</label>
+                                <input type="number" name="variantRegularPrice[]" value="<%= variant.regularPrice %>" placeholder="Regular Price" class="form-control" min="0" required>
+                            </div>
+                            <div class="col-lg-3">
+                                <label class="form-label">Sale Price</label>
+                                <input type="number" name="variantSalePrice[]" value="<%= variant.salePrice %>" placeholder="Sale Price" class="form-control" min="0" required>
+                            </div>
+                            <div class="col-lg-2">
+                                <label class="form-label">&nbsp;</label>
+                                <button type="button" class="btn btn-danger btn-sm d-block" onclick="removeVariantRow('existing-<%= index %>')">Remove</button>
+                            </div>
+                        </div>
+                    <% }) %>
+                <% } %>
+            </div>
+            <button type="button" class="btn btn-sm btn-primary mt-2" onclick="addVariantRow()">+ Add Variant</button>
+            <div id="variants-error" class="error-message"></div>
+        </div>
     </div>
 
     <!-- Category -->
@@ -96,7 +119,7 @@
       <label class="form-label">Add / Replace Images (Min 3 images required)</label>
       <% for (let i = 1; i <= 4; i++) { %>
         <div class="mb-2">
-          <input type="file" id="input<%= i %>" accept="image/*" class="form-control">
+          <input type="file" name="images" id="input<%= i %>" accept="image/*" class="form-control">
           <img id="imgView<%= i %>" class="cropper-preview" style="display:none;">
           <button type="button" id="saveButton<%= i %>" class="btn btn-sm btn-primary mt-1" style="display:none;">Save Crop</button>
         </div>
@@ -129,6 +152,41 @@ document.addEventListener('DOMContentLoaded', () => {
         input.addEventListener('change', (e) => viewImage(e, i));
     }
 });
+
+// Variant Logic
+var variantCount = <%= (locals.product && locals.product.variants) ? locals.product.variants.length : 0 %>;
+
+function addVariantRow() {
+    variantCount++;
+    const container = document.getElementById('variants-container');
+    const row = document.createElement('div');
+    row.className = 'row mb-3 variant-row';
+    row.id = `variant-row-${variantCount}`;
+    
+    row.innerHTML = `
+        <div class="col-lg-3">
+            <input type="text" name="variantSize[]" placeholder="Size (e.g. S, M, 42)" class="form-control" required>
+        </div>
+        <div class="col-lg-3">
+            <input type="number" name="variantQuantity[]" placeholder="Quantity" class="form-control" min="0" required>
+        </div>
+        <div class="col-lg-3">
+            <input type="number" name="variantRegularPrice[]" placeholder="Regular Price" class="form-control" min="0" required>
+        </div>
+        <div class="col-lg-3">
+            <input type="number" name="variantSalePrice[]" placeholder="Sale Price" class="form-control" min="0" required>
+        </div>
+        <div class="col-lg-2">
+            <button type="button" class="btn btn-danger btn-sm" onclick="removeVariantRow(${variantCount})">Remove</button>
+        </div>
+    `;
+    container.appendChild(row);
+}
+
+function removeVariantRow(id) {
+    const row = document.getElementById(`variant-row-${id}`);
+    if (row) row.remove();
+}
 
 let croppers = {};
 
@@ -181,9 +239,10 @@ function validateForm() {
 
     const name = document.getElementsByName('productName')[0].value.trim();
     const description = document.getElementById('descriptionid').value.trim();
-    const regularPrice = document.getElementsByName('regularPrice')[0].value.trim();
-    const salePrice = document.getElementsByName('salePrice')[0].value.trim();
-    const quantity = document.getElementsByName('quantity')[0].value.trim();
+    // Base price/qty validation removed as inputs were removed
+    // const regularPrice = document.getElementsByName('regularPrice')[0].value.trim();
+    // const salePrice = document.getElementsByName('salePrice')[0].value.trim();
+    // const quantity = document.getElementsByName('quantity')[0].value.trim();
     const color = document.getElementsByName('color')[0].value.trim();
 
     const existingImages = document.querySelectorAll('.thumbnail-container img').length;
@@ -191,9 +250,10 @@ function validateForm() {
 
     if (!name) { document.getElementById('productName-error').innerText = 'Enter product name'; document.getElementById('productName-error').style.display='block'; valid=false; }
     if (!description) { document.getElementById('description-error').innerText = 'Enter description'; document.getElementById('description-error').style.display='block'; valid=false; }
-    if (!regularPrice || isNaN(regularPrice)) { document.getElementById('regularPrice-error').innerText = 'Enter valid price'; document.getElementById('regularPrice-error').style.display='block'; valid=false; }
-    if (salePrice && (isNaN(salePrice) || parseFloat(salePrice) >= parseFloat(regularPrice))) { document.getElementById('salePrice-error').innerText = 'Sale price must be less than regular price'; document.getElementById('salePrice-error').style.display='block'; valid=false; }
-    if (!quantity || isNaN(quantity) || parseInt(quantity)<0) { document.getElementById('quantity-error').innerText = 'Enter valid quantity'; document.getElementById('quantity-error').style.display='block'; valid=false; }
+    // if (!regularPrice || isNaN(regularPrice)) { document.getElementById('regularPrice-error').innerText = 'Enter valid price'; document.getElementById('regularPrice-error').style.display='block'; valid=false; }
+    // if (salePrice && (isNaN(salePrice) || parseFloat(salePrice) >= parseFloat(regularPrice))) { document.getElementById('salePrice-error').innerText = 'Sale price must be less than regular price'; document.getElementById('salePrice-error').style.display='block'; valid=false; }
+    // if (!quantity || isNaN(quantity) || parseInt(quantity)<0) { document.getElementById('quantity-error').innerText = 'Enter valid quantity'; document.getElementById('quantity-error').style.display='block'; valid=false; }
+
     if (!color) { document.getElementById('color-error').innerText = 'Enter color'; document.getElementById('color-error').style.display='block'; valid=false; }
     if ((existingImages + newImages) < 3) { document.getElementById('images-error').innerText = 'Minimum 3 images required'; document.getElementById('images-error').style.display='block'; valid=false; }
 

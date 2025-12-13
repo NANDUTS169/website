@@ -1,5 +1,5 @@
 const mongoose = require("mongoose");
-const {Schema} = mongoose;
+const { Schema } = mongoose;
 
 const productSchema = new Schema({
     productName: {
@@ -27,7 +27,7 @@ const productSchema = new Schema({
         type: Number,
         required: true
     },
-    productOffer : {
+    productOffer: {
         type: Number,
         default: 0,
     },
@@ -45,17 +45,38 @@ const productSchema = new Schema({
     },
     isBlocked: {
         type: Boolean,
-        default : false
+        default: false
     },
     status: {
         type: String,
-        enum : ["Available","Out of stock","Discontinued"],
+        enum: ["Available", "Out of stock", "Discontinued"],
         required: true,
         // default: Available
+    },
+    variants: {
+        type: [{
+            size: {
+                type: String,
+                required: true
+            },
+            quantity: {
+                type: Number,
+                required: true
+            },
+            salePrice: {
+                type: Number,
+                required: true
+            },
+            regularPrice: {
+                type: Number,
+                required: true
+            }
+        }],
+        default: []
     }
-},{timestamps: true});
+}, { timestamps: true });
 
-const Product = mongoose.model("Product",productSchema)
+const Product = mongoose.model("Product", productSchema)
 
 module.exports = Product;
 

@@ -1,6 +1,7 @@
 const Brand = require("../../models/brandSchema");
 const Product = require("../../models/productSchema");
 
+
 const getBrandPage = async (req,res) => {
     try {
         const page = parseInt(req.query.page) || 1;
@@ -43,6 +44,8 @@ const addBrand = async (req,res) => {
         res.redirect("/pageerror");
     }
 }
+
+
 
 const blockBrand = async (req,res) => {
     console.log("block brand function invoked");
@@ -93,5 +96,5 @@ module.exports = {
     blockBrand,
     unblockBrand,
     deleteBrand,
-    
+
 }

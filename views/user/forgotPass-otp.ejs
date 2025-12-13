@@ -74,7 +74,7 @@
        <div class="otp-timer" id="otpTimer"></div>
      </div>
      <div class="form-group">
-       <button type="button" class="btn btn-link resend-button" onclick="resendOtp()">Resend OTP</button>
+       <button type="button" id="resendBtn" class="btn btn-link resend-button" onclick="resendOtp()" disabled>Resend OTP</button>
      </div>
      <%if(locals.message && message.length>0) {%>
        <div class="alert alert-danger mt-3">
@@ -108,6 +108,9 @@
 
     function startOtpTimer(){
         const timerElement = document.getElementById('otpTimer');
+        const resendBtn = document.getElementById('resendBtn');
+        resendBtn.disabled = true; // Disable button when timer starts
+        
         otpTimerInterval = setInterval(function(){
             const minutes = Math.floor(timer/60);
             const seconds = timer % 60;
@@ -117,6 +120,7 @@
                 clearInterval(otpTimerInterval);
                 timerElement.textContent = 'Expired';
                 timerElement.style.backgroundColor = 'red';
+                resendBtn.disabled = false; // Enable button when timer expires
             }
         },1000);
     }

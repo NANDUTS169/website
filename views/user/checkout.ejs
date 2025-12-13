@@ -370,13 +370,22 @@ async function saveAddress() {
       const modal = bootstrap.Modal.getInstance(document.getElementById('addressModal'));
       if (modal) modal.hide();
       updateAddressList(data.addresses.filter(a => a.isActive));
-      console.log('Address saved and UI updated');
+      Toast.fire({
+          icon: 'success',
+          title: 'Address added successfully'
+      });
     } else {
-      alert(data.message || 'Failed to save address');
+      Toast.fire({
+          icon: 'error',
+          title: data.message || 'Failed to save address'
+      });
     }
   } catch (err) {
     console.error('saveAddress error', err);
-    alert('Error saving address');
+    Toast.fire({
+        icon: 'error',
+        title: 'Error saving address'
+    });
   }
 }
 
@@ -428,13 +437,22 @@ async function updateAddress() {
       const modal = bootstrap.Modal.getInstance(document.getElementById('editAddressModal'));
       if (modal) modal.hide();
       updateAddressList(data.addresses.filter(a => a.isActive));
-      console.log('Address updated');
+      Toast.fire({
+          icon: 'success',
+          title: 'Address updated successfully'
+      });
     } else {
-      alert(data.message || 'Failed to update address');
+      Toast.fire({
+          icon: 'error',
+          title: data.message || 'Failed to update address'
+      });
     }
   } catch (err) {
     console.error('updateAddress error', err);
-    alert('Error updating address');
+    Toast.fire({
+        icon: 'error',
+        title: 'Error updating address'
+    });
   }
 }
 
@@ -449,13 +467,22 @@ async function deleteAddress(addressId) {
     const data = await res.json();
     if (res.ok && data.success) {
       updateAddressList(data.addresses.filter(a => a.isActive));
-      console.log('Address deleted');
+      Toast.fire({
+          icon: 'success',
+          title: 'Address removed successfully'
+      });
     } else {
-      alert(data.message || 'Delete failed');
+      Toast.fire({
+          icon: 'error',
+          title: data.message || 'Delete failed'
+      });
     }
   } catch (err) {
     console.error('deleteAddress error', err);
-    alert('Error deleting address');
+    Toast.fire({
+        icon: 'error',
+        title: 'Error deleting address'
+    });
   }
 }
 
@@ -463,7 +490,12 @@ async function deleteAddress(addressId) {
 async function placeOrder() {
   try {
     const selected = document.querySelector('input[name="selectedAddress"]:checked');
-    if (!selected) return alert('Please select a delivery address');
+    if (!selected) {
+        return Toast.fire({
+            icon: 'warning',
+            title: 'Please select a delivery address'
+        });
+    }
 
     const addressId = selected.value;
     const res = await fetch('/place-order', {
@@ -475,11 +507,17 @@ async function placeOrder() {
     if (res.ok && data.success) {
       window.location.href = '/orderSuccess/' + data.orderId;
     } else {
-      alert(data.message || 'Failed to place order');
+      Toast.fire({
+          icon: 'error',
+          title: data.message || 'Failed to place order'
+      });
     }
   } catch (err) {
     console.error('placeOrder error', err);
-    alert('Could not place order right now');
+    Toast.fire({
+        icon: 'error',
+        title: 'Could not place order right now'
+    });
   }
 }
 

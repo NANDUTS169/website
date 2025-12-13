@@ -94,41 +94,9 @@
                             <div id="description-error" class="error-message"></div>
                         </div>
                         
-                        <!-- Price, Sale Price, Quantity -->
-                        <div class="row">
-                            <div class="col-lg-4">
-                                <div class="mb-4">
-                                    <label class="form-label">Regular price</label>
-                                    <input placeholder="$" name="regularPrice" type="text" class="form-control border">
-                                    <div id="regularPrice-error" class="error-message"></div>
-                                </div>
-                            </div>
-                            <div class="col-lg-4">
-                                <div class="mb-4">
-                                    <label class="form-label">Sale price</label>
-                                    <input placeholder="$" name="salePrice" type="text" class="form-control border">
-                                    <div id="salePrice-error" class="error-message"></div>
-                                </div>
-                            </div>
-                            <div class="col-lg-4">
-                                <div class="mb-4">
-                                    <label class="form-label">Quantity</label>
-                                    <input placeholder="" name="quantity" type="text" class="form-control border">
-                                    <div id="quantity-error" class="error-message"></div>
-                                </div>
-                            </div>
-                        </div>
-                        
-                        <!-- Color -->
-                        <!-- <div class="row">
-                            <div class="col-lg-4">
-                                <div class="mb-4">
-                                    <label class="form-label">Color</label>
-                                    <input name="color" type="text" class="form-control border">
-                                    <div id="color-error" class="error-message"></div>
-                                </div>
-                            </div>
-                        </div> -->
+
+                        <!-- Price, Sale Price, Quantity Removed as per user request (handled in variants) -->
+
                         
                         <!-- Category -->
                         <div class="card mb-4">
@@ -146,6 +114,20 @@
                                         <div id="category-error" class="error-message"></div>
                                     </div>
                                 </div>
+                            </div>
+                        </div>
+
+                        <!-- Variant Management -->
+                        <div class="card mb-4">
+                            <div class="card-header">
+                                <h4>Product Variants (Sizes)</h4>
+                            </div>
+                            <div class="card-body">
+                                <div id="variants-container">
+                                    <!-- Dynamic Variant Rows will be added here -->
+                                </div>
+                                <button type="button" class="btn btn-sm btn-primary mt-2" onclick="addVariantRow()">+ Add Variant</button>
+                                <div id="variants-error" class="error-message"></div>
                             </div>
                         </div>
                     
@@ -315,6 +297,41 @@ function handleFileSelect(event) {
     addedImagesContainer.appendChild(thumbnail);
 }
 
+// Variant Logic
+let variantCount = 0;
+
+function addVariantRow() {
+    variantCount++;
+    const container = document.getElementById('variants-container');
+    const row = document.createElement('div');
+    row.className = 'row mb-3 variant-row';
+    row.id = `variant-row-${variantCount}`;
+    
+    row.innerHTML = `
+        <div class="col-lg-3">
+            <input type="text" name="variantSize[]" placeholder="Size (e.g. S, M, 42)" class="form-control" required>
+        </div>
+        <div class="col-lg-3">
+            <input type="number" name="variantQuantity[]" placeholder="Quantity" class="form-control" min="0" required>
+        </div>
+        <div class="col-lg-3">
+            <input type="number" name="variantRegularPrice[]" placeholder="Regular Price" class="form-control" min="0" required>
+        </div>
+        <div class="col-lg-3">
+             <input type="number" name="variantSalePrice[]" placeholder="Sale Price" class="form-control" min="0" required>
+        </div>
+        <div class="col-lg-2">
+            <button type="button" class="btn btn-danger btn-sm" onclick="removeVariantRow(${variantCount})">Remove</button>
+        </div>
+    `;
+    container.appendChild(row);
+}
+
+function removeVariantRow(id) {
+    const row = document.getElementById(`variant-row-${id}`);
+    if (row) row.remove();
+}
+
 // Form validation function
 function validateForm() {
     clearErrorMessages();
@@ -323,20 +340,21 @@ function validateForm() {
     // Get form field values
     const name = document.getElementsByName('productName')[0].value;
     const description = document.getElementById('descriptionid').value;
-    const price = document.getElementsByName('regularPrice')[0].value;
-    const saleprice = document.getElementsByName('salePrice')[0].value;
-    // const color = document.getElementsByName('color')[0].value;
-    const quantity = document.getElementsByName('quantity')[0].value;
+    // Quantity/Prices removed from top level form
+    // const price = document.getElementsByName('regularPrice')[0].value;
+    // const saleprice = document.getElementsByName('salePrice')[0].value;
+    // const quantity = document.getElementsByName('quantity')[0].value;
     const images = document.getElementById('input1');
 
     // Validate product name
     if (name.trim() === "") {
         displayErrorMessage('productName-error', 'Please enter a product name.');
         isValid = false;
-    } else if (!/^[a-zA-Z0-9\s]+$/.test(name.trim())) {
-        displayErrorMessage('productName-error', 'Product name should contain only alphanumeric characters.');
-        isValid = false;
-    }
+    } 
+    // else if (!/^[a-zA-Z0-9\s]+$/.test(name.trim())) {
+    //    displayErrorMessage('productName-error', 'Product name should contain only alphanumeric characters.');
+    //    isValid = false;
+    // }
     
     // Validate description
     if (description.trim() === "") {
@@ -344,40 +362,17 @@ function validateForm() {
         isValid = false;
     }
 
-    // Validate quantity
-    if (quantity.trim() === "") {
-        displayErrorMessage('quantity-error', 'Please enter a quantity.');
-        isValid = false;
-    } else if (isNaN(parseInt(quantity)) || parseInt(quantity) < 0) {
-        displayErrorMessage('quantity-error', 'Please enter a valid non-negative quantity.');
-        isValid = false;
+    // Base price/quantity validation removed as they are no longer in the form
+    // We rely on variants now.
+    
+    // Validate Variants
+    const variantRows = document.querySelectorAll('.variant-row');
+    if (variantRows.length === 0) {
+          displayErrorMessage('variants-error', 'Please add at least one variant.');
+          isValid = false; 
     }
+    
 
-    // Validate regular price
-    if (price.trim() === "") {
-        displayErrorMessage('regularPrice-error', 'Please enter a regular price.');
-        isValid = false;
-    } else if (!/^\d+(\.\d{1,2})?$/.test(price) || parseFloat(price) < 0) {
-        displayErrorMessage('regularPrice-error', 'Please enter a valid non-negative price.');
-        isValid = false;
-    }
-
-    // Validate sale price if provided
-    if (saleprice.trim() !== "") {
-        if (!/^\d+(\.\d{1,2})?$/.test(saleprice) || parseFloat(saleprice) < 0) {
-            displayErrorMessage('salePrice-error', 'Please enter a valid non-negative price.');
-            isValid = false;
-        } else if (parseFloat(price) <= parseFloat(saleprice)) {
-            displayErrorMessage('salePrice-error', 'Sale price must be less than regular price.');
-            isValid = false;
-        }
-    }
-
-    // // Validate color
-    // if (color.trim() === "") {
-    //     displayErrorMessage('color-error', 'Please enter a color.');
-    //     isValid = false;
-    // }
 
     // Validate image
     if (!images.files || images.files.length === 0) {

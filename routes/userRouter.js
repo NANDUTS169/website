@@ -13,50 +13,50 @@ const checkoutController = require("../controllers/user/checkoutController");
 const orderController = require("../controllers/user/orderController");
 const addressController = require("../controllers/user/addressController");
 
-router.get("/",userController.loadHomepage);
+router.get("/", userController.loadHomepage);
 
 // Login Management
-router.get("/login",userController.loadLogin);
-router.post("/login",userController.login);
+router.get("/login", userController.loadLogin);
+router.post("/login", userController.login);
 
 // Sign up Mangement
-router.get("/signup",userController.loadsignup);
-router.post("/signup",userController.signup);
-router.post("/verifyotp",userController.verifyOtp);
-router.post("/resendotp",userController.resendotp);
-router.get("/auth/google",passport.authenticate('google',{scope:['profile','email']}));
-router.get("/auth/google/callback",passport.authenticate('google',{failureRedirect:'/signup'}),(req,res) => {
-    if(req.user.isBlocked){
-        return res.render("login",{message:"User is blocked by the admin"})
+router.get("/signup", userController.loadsignup);
+router.post("/signup", userController.signup);
+router.post("/verifyotp", userController.verifyOtp);
+router.post("/resendotp", userController.resendotp);
+router.get("/auth/google", passport.authenticate('google', { scope: ['profile', 'email'] }));
+router.get("/auth/google/callback", passport.authenticate('google', { failureRedirect: '/signup' }), (req, res) => {
+    if (req.user.isBlocked) {
+        return res.render("login", { message: "User is blocked by the admin" })
     }
     req.session.user = req.user._id;
     res.redirect("/")
 });
-router.get("/logout",userController.logout);
+router.get("/logout", userController.logout);
 
 // Profile Mangement
-router.get("/forgot-password",profileController.getForgotPassPage);
-router.post("/forgot-email-valid",profileController.forgotEmailValid);
-router.post("/verify-passForgot-otp",profileController.verifyForgotPassOtp);
-router.get("/reset-password",profileController.getResetPassPage);
-router.post("/resend-forgot-otp",profileController.resendOtp);
-router.post("/reset-password",profileController.postNewPassword);
-router.get("/userProfile",isUserLoggedIn,profileController.getUserProfile);
-router.post("/update-profile",isUserLoggedIn,uploadProfileImage.single('profileImage'),profileController.updateUserProfile);
-router.post("/change-password",isUserLoggedIn,profileController.changePassword);
+router.get("/forgot-password", profileController.getForgotPassPage);
+router.post("/forgot-email-valid", profileController.forgotEmailValid);
+router.post("/verify-passForgot-otp", profileController.verifyForgotPassOtp);
+router.get("/reset-password", profileController.getResetPassPage);
+router.post("/resend-forgot-otp", profileController.resendOtp);
+router.post("/reset-password", profileController.postNewPassword);
+router.get("/userProfile", isUserLoggedIn, profileController.getUserProfile);
+router.post("/update-profile", isUserLoggedIn, uploadProfileImage.single('profileImage'), profileController.updateUserProfile);
+router.post("/change-password", isUserLoggedIn, profileController.changePassword);
 
 // Address Management
 
-router.post('/addresses',isUserLoggedIn,addressController.addAddress);
-router.patch('/addresses/:addressId/soft-delete', isUserLoggedIn,addressController.deleteAddress);
-router.patch('/addresses/:addressId', isUserLoggedIn,addressController.updateAddress);
+router.post('/addresses', isUserLoggedIn, addressController.addAddress);
+router.patch('/addresses/:addressId/soft-delete', isUserLoggedIn, addressController.deleteAddress);
+router.patch('/addresses/:addressId', isUserLoggedIn, addressController.updateAddress);
 
 
 // product management
 
 router.get("/products", productController.getUserProductList);
-router.get("/productdetail",userController.productdetail);
-router.get("/productdetails/:id",productController.getProductDetailPage);
+router.get("/productdetail", userController.productdetail);
+router.get("/productdetails/:id", productController.getProductDetailPage);
 
 // Wishlist Mangement
 
@@ -65,25 +65,26 @@ router.post("/wishlist/add", isUserLoggedIn, wishlistController.addToWishlist);
 router.post("/wishlist/remove", isUserLoggedIn, wishlistController.removeFromWishlist);
 
 // Cart Management
-router.get('/cart',userAuth,cartController.cart);
-router.post('/addToCart',userAuth ,cartController.addToCart);
-router.post('/cart/update',userAuth,cartController.updateCartItem);
-router.get('/cart/remove/:productId',userAuth,cartController.removeFromCart);
+router.get('/cart', userAuth, cartController.cart);
+router.post('/addToCart', userAuth, cartController.addToCart);
+router.post('/cart/update', userAuth, cartController.updateCartItem);
+router.get('/cart/remove/:itemId', userAuth, cartController.removeFromCart);
+router.delete('/cart/remove/:itemId', userAuth, cartController.removeFromCart);
 
 // Checkout & Order Management
 
-router.get("/checkout",userAuth,checkoutController.getcheckoutPage);
+router.get("/checkout", userAuth, checkoutController.getcheckoutPage);
 router.post('/place-order', userAuth, orderController.placeOrder);
-router.get('/orderSuccess/:orderId', userAuth,orderController.getOrderSuccess);
+router.get('/orderSuccess/:orderId', userAuth, orderController.getOrderSuccess);
 router.get('/orders', userAuth, orderController.listOrders);
-router.get('/order/:orderId',userAuth,orderController.getOrderDetails);
+router.get('/order/:orderId', userAuth, orderController.getOrderDetails);
 router.post('/order/:orderId/cancel', userAuth, orderController.cancelOrder);
-router.get('/order/:orderId/invoice', userAuth,orderController.getInvoice);
+router.get('/order/:orderId/invoice', userAuth, orderController.getInvoice);
 router.get('/orders/statuses', userAuth, orderController.getOrderStatuses);
 
 
 // Error Management
-router.get("/pageNotFound",userController.pageNotFound);
+router.get("/pageNotFound", userController.pageNotFound);
 
 
 module.exports = router;

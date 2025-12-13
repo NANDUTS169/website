@@ -95,10 +95,8 @@
                     </span>
                   </td>
                   <td class="text-start">
-                    <button class="btn <%= category.isListed ? 'btn-danger' : 'btn-success' %>" style="width: 70px;">
-                      <a href="/admin/<%= category.isListed ? 'listCategory' : 'unlistCategory' %>?id=<%=category._id%>" class="text-white">
-                        <%= category.isListed ? 'Unlist' : 'List' %>
-                      </a>
+                    <button class="btn <%= category.isListed ? 'btn-danger' : 'btn-success' %>" style="width: 70px;" onclick="confirmCategoryAction('/admin/<%= category.isListed ? 'listCategory' : 'unlistCategory' %>?id=<%=category._id%>', '<%= category.isListed ? 'Unlist' : 'List' %>')">
+                         <%= category.isListed ? 'Unlist' : 'List' %>
                     </button>
                   </td>
                   <td class="text-start">
@@ -254,6 +252,22 @@
     } catch (error) {
       Swal.fire("Error", "An error occurred while removing the offer", "error");
     }
+  }
+
+  function confirmCategoryAction(url, actionType) {
+    Swal.fire({
+      title: 'Are you sure?',
+      text: `Do you really want to ${actionType} this category?`,
+      icon: 'warning',
+      showCancelButton: true,
+      confirmButtonColor: '#3085d6',
+      cancelButtonColor: '#d33',
+      confirmButtonText: `Yes, ${actionType} it!`
+    }).then((result) => {
+      if (result.isConfirmed) {
+        window.location.href = url;
+      }
+    });
   }
 </script>
 

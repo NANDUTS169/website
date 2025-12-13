@@ -13,7 +13,7 @@ const errorHandling = require('./middlewares/errorHandling')
 db()
 
 app.use(express.json());
-app.use(express.urlencoded({extended:true})) 
+app.use(express.urlencoded({ extended: true }))
 app.use(session({
     secret: process.env.SESSION_SECRET,
     resave: false,
@@ -21,12 +21,23 @@ app.use(session({
     cookie: {
         secure: false,
         httpOnly: true,
-        maxAge: 72*60*60*1000
+        maxAge: 72 * 60 * 60 * 1000
     }
 }))
 
-app.use((req,res,next) => {
-    res.locals.user = req.session.user || null;
+app.use(async (req, res, next) => {
+    if (req.session.user) {
+        try {
+            const User = require('./models/userSchema');
+            const userData = await User.findById(req.session.user);
+            res.locals.user = userData || null;
+        } catch (error) {
+            console.error("Error fetching user data:", error);
+            res.locals.user = null;
+        }
+    } else {
+        res.locals.user = null;
+    }
     res.locals.cartCount = req.session.cartCount || 0;
     res.locals.wishlistCount = req.session.wishlistCount || 0;
     next();
@@ -36,21 +47,21 @@ app.use(passport.initialize());
 app.use(passport.session());
 
 
-app.use((req,res,next) => {
-    res.set('cache-control','no-store')
-        next();
+app.use((req, res, next) => {
+    res.set('cache-control', 'no-store')
+    next();
 })
 
-app.set("view engine","ejs")
+app.set("view engine", "ejs")
 // app.set("views",(path.join(__dirname,'views/user')));
 // app.set("views",(path.join(__dirname,"views/admin")));
 
-app.set("views",[path.join(__dirname,'views/user'),path.join(__dirname,'views/admin')]);
-app.use(express.static(path.join(__dirname,"Public")));
+app.set("views", [path.join(__dirname, 'views/user'), path.join(__dirname, 'views/admin')]);
+app.use(express.static(path.join(__dirname, "Public")));
 
 
-app.use("/admin",adminRouter);
-app.use("/",userRouter);
+app.use("/admin", adminRouter);
+app.use("/", userRouter);
 
 app.use(errorHandling.errorHandling);
 

@@ -94,16 +94,23 @@
         <div class="row" id="productList">
             <% if (products && products.length > 0) { %>
             <% products.forEach(product => {
-const unavailable = (product.isBlocked === true) || (product.status !== "Available") || (product.quantity <= 0); %>
+                const unavailable = (product.isBlocked === true) || (product.status !== "Available") || (product.quantity <= 0); 
+            %>
             <div class="col-lg-3 col-md-4 col-sm-6 mb-4 text-center d-flex">
                 <div class="product-entry border position-relative w-100">
 
                     <!-- Product Image -->
                     <a href="/productdetails/<%= product._id %>"
                         class="prod-img d-block">
+                        <% if (product.productImage && product.productImage.length > 0) { %>
                         <img src="/uploads/product-images/<%= product.productImage[0] %>"
                             class="img-fluid"
                             alt="<%= product.productName %>">
+                        <% } else { %>
+                        <img src="/images/product-placeholder.jpg"
+                            class="img-fluid"
+                            alt="<%= product.productName %>">
+                        <% } %>
                     </a>
 
                     <!-- Wishlist -->
@@ -144,21 +151,83 @@ const unavailable = (product.isBlocked === true) || (product.status !== "Availab
             <% } %>
         </div>
 
-        <!-- Pagination (Optional, static for now) -->
+        <!-- Pagination -->
+        <% if (pagination && pagination.totalPages > 1) { 
+            const curr = Number(pagination.currentPage);
+            const total = Number(pagination.totalPages);
+            const prev = curr - 1;
+            const next = curr + 1;
+            const max = 5;
+            
+            let start = Math.max(1, curr - Math.floor(max / 2));
+            let end = Math.min(total, start + max - 1);
+            
+            if (end - start < max - 1) {
+                start = Math.max(1, end - max + 1);
+            }
+        %>
         <div class="row">
             <div class="col-md-12 text-center">
-                <ul class="pagination">
-                    <li class="page-item"><a class="page-link" href="#">Prev</a>
+                <ul class="pagination justify-content-center">
+                    <!-- Previous Button -->
+                    <li class="page-item <%= !pagination.hasPrevPage ? 'disabled' : '' %>">
+                        <a class="page-link" href="#" 
+                           onclick="changePage('<%= prev %>'); return false;">
+                            Prev
+                        </a>
                     </li>
-                    <li class="page-item active"><a class="page-link"
-                            href="#">1</a></li>
-                    <li class="page-item"><a class="page-link" href="#">2</a>
-                    </li>
-                    <li class="page-item"><a class="page-link" href="#">Next</a>
+                    
+                    <!-- First page if not in range -->
+                    <% if (start > 1) { %>
+                        <li class="page-item">
+                            <a class="page-link" href="#" onclick="changePage(1); return false;">1</a>
+                        </li>
+                        <% if (start > 2) { %>
+                            <li class="page-item disabled">
+                                <span class="page-link">...</span>
+                            </li>
+                        <% } %>
+                    <% } %>
+                    
+                    <!-- Page number buttons -->
+                    <% for (let i = start; i <= end; i++) { %>
+                        <li class="page-item <%= i === curr ? 'active' : '' %>">
+                            <a class="page-link" href="#" 
+                               onclick="changePage('<%= i %>'); return false;">
+                                <%= i %>
+                            </a>
+                        </li>
+                    <% } %>
+                    
+                    <!-- Last page if not in range -->
+                    <% if (end < total) { %>
+                        <% if (end < total - 1) { %>
+                            <li class="page-item disabled">
+                                <span class="page-link">...</span>
+                            </li>
+                        <% } %>
+                        <li class="page-item">
+                            <a class="page-link" href="#" onclick="changePage('<%= total %>'); return false;">
+                                <%= total %>
+                            </a>
+                        </li>
+                    <% } %>
+                    
+                    <!-- Next Button -->
+                    <li class="page-item <%= !pagination.hasNextPage ? 'disabled' : '' %>">
+                        <a class="page-link" href="#" 
+                           onclick="changePage('<%= next %>'); return false;">
+                            Next
+                        </a>
                     </li>
                 </ul>
+                <p class="text-muted">
+                    Showing page <%= curr %> of <%= total %> 
+                    (<%= pagination.totalProducts %> total products)
+                </p>
             </div>
         </div>
+        <% } %>
     </div>
 </div>
 
@@ -283,6 +352,14 @@ const unavailable = (product.isBlocked === true) || (product.status !== "Availab
     }
 
 
+    // Pagination
+    let currentPage = parseInt('<%= (typeof pagination !== "undefined" && pagination && pagination.currentPage) ? pagination.currentPage : 1 %>') || 1;
+    
+    function changePage(page) {
+        currentPage = Number(page);
+        applyFilters(false); // Don't reset page when navigating
+    }
+
     // Filters
     document.getElementById("searchInput").addEventListener("input",
         applyFilters);
@@ -291,10 +368,13 @@ const unavailable = (product.isBlocked === true) || (product.status !== "Availab
     document.getElementById("sortSelect").addEventListener("change",
         applyFilters);
 
-    async function applyFilters() {
+    async function applyFilters(resetPage = true) {
+        if (resetPage) {
+            currentPage = 1; // Reset to first page when filters change
+        }
+        
         const search = document.getElementById("searchInput").value;
         const category = document.getElementById("categoryFilter").value;
-        console.log("00000000000000000",category);
         const minPrice = document.getElementById("minPrice").value;
         const maxPrice = document.getElementById("maxPrice").value;
         const sort = document.getElementById("sortSelect").value;
@@ -304,11 +384,20 @@ const unavailable = (product.isBlocked === true) || (product.status !== "Availab
             category,
             minPrice,
             maxPrice,
-            sort
+            sort,
+            page: currentPage
         });
-
-        console.log(query);
         
+        // Helper to escape HTML to prevent XSS and broken layout
+        const escapeHtml = (unsafe) => {
+            return unsafe
+                 .replace(/&/g, "&amp;")
+                 .replace(/</g, "&lt;")
+                 .replace(/>/g, "&gt;")
+                 .replace(/"/g, "&quot;")
+                 .replace(/'/g, "&#039;");
+        }
+
         try {
             const res = await fetch(`/products?${query.toString()}`, {
                 headers: {
@@ -323,24 +412,29 @@ const unavailable = (product.isBlocked === true) || (product.status !== "Availab
             if (!data.products || data.products.length === 0) {
                 container.innerHTML =
                     `<div class="col-12 text-center"><p>No products found.</p></div>`;
+                // Hide pagination when no products
+                updatePaginationUI(null);
                 return;
             }
 
             data.products.forEach(p => {
-                const unavailable = (p.isBlocked === true) || (p
-                    .status !== "Available") || (p.quantity <=
-                    0);
+                const unavailable = (p.isBlocked === true) || (p.status !== "Available") || (p.quantity <= 0);
+                const safeName = escapeHtml(p.productName);
+                const imageSrc = (p.productImage && p.productImage.length > 0) 
+                    ? `/uploads/product-images/${p.productImage[0]}` 
+                    : '/images/product-placeholder.jpg'; // Fallback image
+
                 container.innerHTML += `
           <div class="col-lg-3 col-md-4 col-sm-6 mb-4 text-center d-flex">
             <div class="product-entry border position-relative w-100">
               <a href="/productdetails/${p._id}" class="prod-img d-block">
-                <img src="/uploads/product-images/${p.productImage[0]}" class="img-fluid" alt="${p.productName}">
+                <img src="${imageSrc}" class="img-fluid" alt="${safeName}">
               </a>
-              <button class="wishlist-btn" onclick="addToWishlist('${p._id}')">
-                <i class="icon-heart" style="font-size: 20px; color: red;"></i>
+              <button class="wishlist-btn" onclick="addToWishlist(this, '${p._id}')">
+                <i class="icon-heart-outline" style="font-size: 20px; color: grey;"></i>
               </button>
               <div class="desc">
-                <h2><a href="/productdetails/${p._id}">${p.productName}</a></h2>
+                <h2><a href="/productdetails/${p._id}">${safeName}</a></h2>
                 <span class="price">₹ ${p.salePrice}</span>
                 ${unavailable 
                   ? `<p><button class="btn btn-sm btn-secondary mt-2" disabled>Unavailable</button></p>`
@@ -350,8 +444,98 @@ const unavailable = (product.isBlocked === true) || (product.status !== "Availab
           </div>
         `;
             });
+            
+            // Update pagination UI
+            updatePaginationUI(data.pagination);
         } catch (err) {
             console.error("Filter error", err);
+        }
+    }
+    
+    function updatePaginationUI(pagination) {
+        // Find or create pagination container
+        let paginationContainer = document.querySelector('.pagination');
+        let paginationRow = paginationContainer ? paginationContainer.closest('.row') : null;
+        
+        // If no pagination data or only 1 page, hide pagination
+        if (!pagination || pagination.totalPages <= 1) {
+            if (paginationRow) {
+                paginationRow.style.display = 'none';
+            }
+            return;
+        }
+        
+        // Show pagination row
+        if (paginationRow) {
+            paginationRow.style.display = '';
+        }
+        
+        // Generate pagination HTML
+        const maxPages = 5;
+        const currentPage = pagination.currentPage;
+        const totalPages = pagination.totalPages;
+        
+        let startPage = Math.max(1, currentPage - Math.floor(maxPages / 2));
+        let endPage = Math.min(totalPages, startPage + maxPages - 1);
+        
+        if (endPage - startPage < maxPages - 1) {
+            startPage = Math.max(1, endPage - maxPages + 1);
+        }
+        
+        let html = '';
+        
+        // Previous button
+        html += `<li class="page-item ${!pagination.hasPrevPage ? 'disabled' : ''}">
+            <a class="page-link" href="#" onclick="changePage(${currentPage - 1}); return false;">Prev</a>
+        </li>`;
+        
+        // First page if not in range
+        if (startPage > 1) {
+            html += `<li class="page-item">
+                <a class="page-link" href="#" onclick="changePage(1); return false;">1</a>
+            </li>`;
+            if (startPage > 2) {
+                html += `<li class="page-item disabled"><span class="page-link">...</span></li>`;
+            }
+        }
+        
+        // Page numbers
+        for (let i = startPage; i <= endPage; i++) {
+            html += `<li class="page-item ${i === currentPage ? 'active' : ''}">
+                <a class="page-link" href="#" onclick="changePage(${i}); return false;">${i}</a>
+            </li>`;
+        }
+        
+        // Last page if not in range
+        if (endPage < totalPages) {
+            if (endPage < totalPages - 1) {
+                html += `<li class="page-item disabled"><span class="page-link">...</span></li>`;
+            }
+            html += `<li class="page-item">
+                <a class="page-link" href="#" onclick="changePage(${totalPages}); return false;">${totalPages}</a>
+            </li>`;
+        }
+        
+        // Next button
+        html += `<li class="page-item ${!pagination.hasNextPage ? 'disabled' : ''}">
+            <a class="page-link" href="#" onclick="changePage(${currentPage + 1}); return false;">Next</a>
+        </li>`;
+        
+        // Update pagination
+        if (paginationContainer) {
+            paginationContainer.innerHTML = html;
+            
+            // Update info text
+            const infoText = paginationRow.querySelector('.text-muted');
+            if (infoText) {
+                infoText.textContent = `Showing page ${currentPage} of ${totalPages} (${pagination.totalProducts} total products)`;
+            } else {
+                // Add info text if doesn't exist
+                const col = paginationRow.querySelector('.col-md-12');
+                if (col) {
+                    col.innerHTML += `<p class="text-muted">Showing page ${currentPage} of ${totalPages} (${pagination.totalProducts} total products)</p>`;
+                }
+            }
         }
     }
 </script>

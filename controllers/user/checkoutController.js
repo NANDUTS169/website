@@ -16,15 +16,14 @@ const getcheckoutPage = async (req, res) => {
     const userCart = await Cart.findOne({ userId: userId }).populate('items.productId').lean();
 
     if (!userCart || !userCart.items || userCart.items.length === 0) {
-      return res.render('checkout', {
-        addresses,
-        cartItems: [],
-        subTotal: 0,
-        discount: 0,
-        taxes: 0,
-        shipping: 0,
-        total: 0
-      });
+      return res.redirect('/cart'); // Redirect empty cart to cart page
+    }
+
+    // Check for blocked/unavailable products
+    for (const item of userCart.items) {
+      if (!item.productId || item.productId.isBlocked) {
+        return res.redirect('/cart?error=Some items in your cart are currently unavailable.');
+      }
     }
 
     let subTotal = 0;
@@ -42,7 +41,7 @@ const getcheckoutPage = async (req, res) => {
       };
     });
 
-    const discount = 0; 
+    const discount = 0;
     const taxes = Math.round(subTotal * 0.12); //  12% taxes
     const shipping = subTotal > 500 ? 0 : 50;
     const total = subTotal - discount + taxes + shipping;
@@ -62,6 +61,6 @@ const getcheckoutPage = async (req, res) => {
   }
 };
 
-module.exports = { 
-    getcheckoutPage 
+module.exports = {
+  getcheckoutPage
 };
