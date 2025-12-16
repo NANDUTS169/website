@@ -79,20 +79,12 @@
                 </div>
                 <% } else { %>
                 <div>
-                  <div style="margin-left: 100px; display: inline-flex;">
-                    <a style="margin-right: 20px; color: black;" href="/userProfile"><b>Profile</b></a>
+                  <div style="margin-left: 50px; display: inline-flex; align-items: center;">
+                    <a style="margin-right: 20px; color: black;" href="/userProfile"><b><%= locals.user.name %></b></a>
                     <a style="margin-right: 20px; color: black;" href="/logout"><b>Logout</b></a>
                   </div>
                 </div>
                 <% } %>
-
-                <!-- <div class="form-group d-flex flex-grow-1">
-                  <input type="search" name="q" class="form-control search"
-                    placeholder="Search products..." style="width:max-content">
-                  <button class="btn btn-primary submit-search text-center" type="submit">
-                    <i class="icon-search"></i>
-                  </button>
-                </div> -->
               </form>
             </div>
           </div>

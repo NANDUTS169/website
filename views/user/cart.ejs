@@ -34,12 +34,22 @@
     </div>
     
     
+    <div id="cart-error-message"></div>
     <script>
-        const urlParams = new URLSearchParams(window.location.search);
-        const errorMsg = urlParams.get('error');
-        if(errorMsg) {
-             document.write(`<div class="alert alert-danger text-center w-100">${errorMsg}</div>`);
-        }
+        document.addEventListener("DOMContentLoaded", function() {
+            const urlParams = new URLSearchParams(window.location.search);
+            const errorMsg = urlParams.get('error');
+            if(errorMsg) {
+                 const errorDiv = document.getElementById('cart-error-message');
+                 if(errorDiv) {
+                    errorDiv.innerHTML = `<div class="alert alert-danger text-center w-100">${errorMsg}</div>`;
+                 }
+                 
+                 // Remove the error param from URL so it doesn't persist on reload
+                 const newUrl = window.location.protocol + "//" + window.location.host + window.location.pathname;
+                 window.history.replaceState({path:newUrl},'',newUrl);
+            }
+        });
     </script>
 
 

@@ -241,9 +241,11 @@ const verifyOtp = async (req, res) => {
             })
 
             await saveUserData.save();
-
-            // Store only user ID in session for consistency with auth middleware
             req.session.user = saveUserData._id;
+            delete req.session.userOtp;
+            delete req.session.userData;
+            delete req.session.lastOtpTime;
+
             res.json({ success: true, redirectUrl: "/" })
 
         } else {

@@ -5,7 +5,6 @@ const profileController = require("../controllers/user/profileController");
 const productController = require("../controllers/user/productController");
 const passport = require("../config/passport");
 const { userAuth } = require('../middlewares/auth');
-const { isUserLoggedIn } = require('../middlewares/sessionHandling');
 const { uploadProductImages, uploadProfileImage } = require('../helpers/multer');
 const cartController = require('../controllers/user/cartController')
 const wishlistController = require("../controllers/user/wishlistController");
@@ -41,15 +40,15 @@ router.post("/verify-passForgot-otp", profileController.verifyForgotPassOtp);
 router.get("/reset-password", profileController.getResetPassPage);
 router.post("/resend-forgot-otp", profileController.resendOtp);
 router.post("/reset-password", profileController.postNewPassword);
-router.get("/userProfile", isUserLoggedIn, profileController.getUserProfile);
-router.post("/update-profile", isUserLoggedIn, uploadProfileImage.single('profileImage'), profileController.updateUserProfile);
-router.post("/change-password", isUserLoggedIn, profileController.changePassword);
+router.get("/userProfile", userAuth, profileController.getUserProfile);
+router.post("/update-profile", userAuth, uploadProfileImage.single('profileImage'), profileController.updateUserProfile);
+router.post("/change-password", userAuth, profileController.changePassword);
 
 // Address Management
 
-router.post('/addresses', isUserLoggedIn, addressController.addAddress);
-router.patch('/addresses/:addressId/soft-delete', isUserLoggedIn, addressController.deleteAddress);
-router.patch('/addresses/:addressId', isUserLoggedIn, addressController.updateAddress);
+router.post('/addresses', userAuth, addressController.addAddress);
+router.patch('/addresses/:addressId/soft-delete', userAuth, addressController.deleteAddress);
+router.patch('/addresses/:addressId', userAuth, addressController.updateAddress);
 
 
 // product management
@@ -60,9 +59,9 @@ router.get("/productdetails/:id", productController.getProductDetailPage);
 
 // Wishlist Mangement
 
-router.get("/wishlist", isUserLoggedIn, wishlistController.getWishlist);
-router.post("/wishlist/add", isUserLoggedIn, wishlistController.addToWishlist);
-router.post("/wishlist/remove", isUserLoggedIn, wishlistController.removeFromWishlist);
+router.get("/wishlist", userAuth, wishlistController.getWishlist);
+router.post("/wishlist/add", userAuth, wishlistController.addToWishlist);
+router.post("/wishlist/remove", userAuth, wishlistController.removeFromWishlist);
 
 // Cart Management
 router.get('/cart', userAuth, cartController.cart);

@@ -29,17 +29,33 @@ app.use(async (req, res, next) => {
     if (req.session.user) {
         try {
             const User = require('./models/userSchema');
+            const Cart = require('./models/cartSchema');
+            const Wishlist = require('./models/wishlistSchema');
+
             const userData = await User.findById(req.session.user);
             res.locals.user = userData || null;
+
+            if (userData) {
+                const cart = await Cart.findOne({ userId: userData._id });
+                const wishlist = await Wishlist.findOne({ userId: userData._id });
+
+                res.locals.cartCount = cart ? cart.items.length : 0;
+                res.locals.wishlistCount = wishlist ? wishlist.items.length : 0;
+            } else {
+                res.locals.cartCount = 0;
+                res.locals.wishlistCount = 0;
+            }
         } catch (error) {
             console.error("Error fetching user data:", error);
             res.locals.user = null;
+            res.locals.cartCount = 0;
+            res.locals.wishlistCount = 0;
         }
     } else {
         res.locals.user = null;
+        res.locals.cartCount = 0;
+        res.locals.wishlistCount = 0;
     }
-    res.locals.cartCount = req.session.cartCount || 0;
-    res.locals.wishlistCount = req.session.wishlistCount || 0;
     next();
 });
 

@@ -157,7 +157,7 @@
     if (changeBtn) {
       changeBtn.addEventListener('click', function(){
         var status = document.getElementById('statusSelect').value;
-        var note = document.getElementById('statusNote').value;
+        var note = ""; // document.getElementById('statusNote') ? document.getElementById('statusNote').value : "";
         changeBtn.disabled = true;
         fetch('/admin/order/' + orderId + '/status', {
           method: 'POST',
@@ -234,5 +234,6 @@
 
   })();
 </script>
+
 
 <%- include('../../views/partials/admin/footer') %>
