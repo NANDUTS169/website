@@ -7,6 +7,8 @@ const Product = require('../../models/productSchema');
 const Order = require('../../models/orderSchema');
 const mongoose = require('mongoose');
 
+
+// TODO : Undrestand later
 const placeOrder = async (req, res) => {
   try {
     const userId = req.session.user;

@@ -54,7 +54,7 @@ router.patch('/addresses/:addressId', userAuth, addressController.updateAddress)
 // product management
 
 router.get("/products", productController.getUserProductList);
-router.get("/productdetail", userController.productdetail);
+// router.get("/productdetail", userController.productdetail);
 router.get("/productdetails/:id", productController.getProductDetailPage);
 
 // Wishlist Mangement
@@ -67,7 +67,7 @@ router.post("/wishlist/remove", userAuth, wishlistController.removeFromWishlist)
 router.get('/cart', userAuth, cartController.cart);
 router.post('/addToCart', userAuth, cartController.addToCart);
 router.post('/cart/update', userAuth, cartController.updateCartItem);
-router.get('/cart/remove/:itemId', userAuth, cartController.removeFromCart);
+// router.get('/cart/remove/:itemId', userAuth, cartController.removeFromCart);
 router.delete('/cart/remove/:itemId', userAuth, cartController.removeFromCart);
 
 // Checkout & Order Management

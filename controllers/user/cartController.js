@@ -105,6 +105,7 @@ const addToCart = async (req, res) => {
     await Wishlist.updateOne({ userId }, { $pull: { items: { productId } } });
 
     return res.status(200).json({ message: "Added to cart successfully" });
+
   } catch (err) {
     console.error("Error adding to cart:", err);
     return res.status(500).json({ message: "Server error" });
@@ -234,3 +235,4 @@ module.exports = {
   removeFromCart,
   validateCartBeforeCheckout
 };
+

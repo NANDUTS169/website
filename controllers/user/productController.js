@@ -8,7 +8,7 @@ const User = require("../../models/userSchema");
 const getUserProductList = async (req, res) => {
   try {
     const { search, category, minPrice, maxPrice, sort, page = 1 } = req.query;
-    const limit = 3;
+    const limit = 4;
     const skip = (parseInt(page) - 1) * limit;
 
     let query = {

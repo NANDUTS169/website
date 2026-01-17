@@ -9,7 +9,6 @@ const db = require('./config/db')
 const userRouter = require('./routes/userRouter');
 const adminRouter = require('./routes/adminRouter');
 const errorHandling = require('./middlewares/errorHandling')
-
 db()
 
 app.use(express.json());

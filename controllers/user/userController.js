@@ -52,26 +52,6 @@ const loadsignup = async (req, res) => {
     }
 }
 
-// const signup = async(req,res) => {
-//     const {name,email,phone,password} = req.body;
-
-//     try {
-
-//         const newUser = new User({name,email,phone,password});
-//         console.log(newUser)
-//         await newUser.save();
-//         return res.redirect("/")
-
-//     } catch (error){
-//         console.error("Error for save user",error);
-//         res.status(500).send("Internal server error");
-//     }
-// }
-
-
-// function generateOtp(){
-//     return Math.floor(100000) + Math.random()*(900000).toString();
-// }
 
 function verificationOtp() {
     const otp = otpGenerator.generate(6, {
@@ -97,8 +77,6 @@ async function sendVerificationEmail(email, otp) {
                 user: process.env.NODEMAILER_EMAIL,
                 pass: process.env.NODEMAILER_PASSWORD
             },
-            // logger: true,
-            // debug: true,
 
         })
         console.log("NODEMAILER_EMAIL:", process.env.NODEMAILER_EMAIL);
@@ -204,13 +182,15 @@ const login = async (req, res) => {
     }
 }
 
-const productdetail = async (req, res) => {
-    try {
-        res.render("product-detail")
-    } catch (error) {
-        res.redirect("/pageNotFound");
-    }
-}
+// const productdetail = async (req, res) => {
+//     try {
+//         res.render("product-detail")
+//         console.log("productdetail function invoked...from userController");
+
+//     } catch (error) {
+//         res.redirect("/pageNotFound");
+//     }
+// }
 
 const securePassword = async (password) => {
     try {
@@ -326,7 +306,7 @@ module.exports = {
     signup,
     loadLogin,
     login,
-    productdetail,
+    // productdetail,
     verifyOtp,
     resendotp,
     logout,

@@ -7,6 +7,7 @@ const path = require("path");
 const sharp = require("sharp");
 const { log } = require("console");
 
+
 const getProductAddPage = async (req, res) => {
     try {
         const category = await Category.find({ isListed: true });
@@ -19,7 +20,7 @@ const getProductAddPage = async (req, res) => {
         res.redirect("/pageerror");
         console.error(error);
     }
-};
+}
 
 
 const addProducts = async (req, res) => {
@@ -78,6 +79,17 @@ const addProducts = async (req, res) => {
                     }
                 }
             }
+
+            for(let i=0;i<variants.quantity;i++){
+                console.log(variants);
+                if(variants[i].quantity < 5){
+                    return res.status(400).render("admin/addProducts",{
+                        error: "Cannnot add product. Minimum 5 products required in each varients",
+                        formData: products
+                    })
+                }
+            }
+
 
             const newProduct = new Product({
                 productName: products.productName,
