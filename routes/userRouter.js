@@ -74,11 +74,15 @@ router.delete('/cart/remove/:itemId', userAuth, cartController.removeFromCart);
 
 router.get("/checkout", userAuth, checkoutController.getcheckoutPage);
 router.post('/place-order', userAuth, orderController.placeOrder);
+router.post('/create-razorpay-order', userAuth, orderController.createRazorpayOrder);
+router.post('/verify-razorpay-payment', userAuth, orderController.verifyRazorpayPayment);
 router.get('/orderSuccess/:orderId', userAuth, orderController.getOrderSuccess);
 router.get('/orders', userAuth, orderController.listOrders);
 router.get('/order/:orderId', userAuth, orderController.getOrderDetails);
 router.post('/order/:orderId/cancel', userAuth, orderController.cancelOrder);
 router.get('/order/:orderId/invoice', userAuth, orderController.getInvoice);
+router.get('/orderFailure/:orderId', userAuth, orderController.getOrderFailure);
+router.post('/retry-razorpay-payment', userAuth, orderController.retryRazorpayPayment);
 router.get('/orders/statuses', userAuth, orderController.getOrderStatuses);
 
 

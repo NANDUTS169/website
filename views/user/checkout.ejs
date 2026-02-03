@@ -94,7 +94,32 @@
 
           <div class="d-flex justify-content-between fw-bold"><span>Total:</span> <span>₹ <%= total %></span></div>
 
-          <button id="placeOrderBtn" class="btn btn-success w-100 mt-3">Place Order (Cash on Delivery)</button>
+          <hr>
+
+          <!-- Payment Method Selection -->
+          <div class="payment-method-section mt-3">
+            <h6 class="mb-3"><i class="fas fa-credit-card me-2"></i>Select Payment Method</h6>
+            
+            <div class="payment-option border rounded p-3 mb-2" style="cursor: pointer; transition: all 0.3s;" onclick="selectPaymentMethod('razorpay')">
+              <label style="cursor: pointer; width: 100%;">
+                <input type="radio" name="paymentMethod" value="razorpay" class="me-2">
+                <strong>Razorpay (Online Payment)</strong>
+                <p class="mb-0 mt-1 text-muted small">Pay securely using Credit/Debit Card, UPI, Net Banking, or Wallet</p>
+              </label>
+            </div>
+
+            <div class="payment-option border rounded p-3 mb-2" style="cursor: pointer; transition: all 0.3s;" onclick="selectPaymentMethod('cod')">
+              <label style="cursor: pointer; width: 100%;">
+                <input type="radio" name="paymentMethod" value="cod" class="me-2" checked>
+                <strong>Cash on Delivery (COD)</strong>
+                <p class="mb-0 mt-1 text-muted small">Pay with cash when your order is delivered</p>
+              </label>
+            </div>
+          </div>
+
+          <button id="placeOrderBtn" class="btn btn-success w-100 mt-3">
+            <i class="fas fa-shopping-bag me-2"></i>Place Order (Cash on Delivery)
+          </button>
 
         </div>
       </div>
@@ -259,10 +284,27 @@
 
 <%- include('../../views/partials/user/footer')%>
 
-<!-- put this BEFORE your custom script that uses bootstrap -->
-<script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/js/bootstrap.bundle.min.js" integrity="sha384-..." crossorigin="anonymous"></script>
-
+<!-- Bootstrap JS -->
 <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/js/bootstrap.bundle.min.js"></script>
+
+<!-- SweetAlert2 -->
+<script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
+<script>
+  const Toast = Swal.mixin({
+    toast: true,
+    position: 'top-end',
+    showConfirmButton: false,
+    timer: 3000,
+    timerProgressBar: true,
+    didOpen: (toast) => {
+      toast.addEventListener('mouseenter', Swal.stopTimer)
+      toast.addEventListener('mouseleave', Swal.resumeTimer)
+    }
+  });
+</script>
+
+<!-- Razorpay Checkout Script -->
+<script src="https://checkout.razorpay.com/v1/checkout.js"></script>
 
 <script>
 
@@ -486,38 +528,175 @@ async function deleteAddress(addressId) {
   }
 }
 
-/* Place order (COD) */
+/* Select payment method and update UI */
+function selectPaymentMethod(method) {
+  // Update radio button
+  const radios = document.querySelectorAll('input[name="paymentMethod"]');
+  radios.forEach(radio => {
+    radio.checked = (radio.value === method);
+  });
+
+  // Update button text
+  const btn = document.getElementById('placeOrderBtn');
+  if (btn) {
+    if (method === 'razorpay') {
+      btn.innerHTML = '<i class="fas fa-credit-card me-2"></i>Proceed to Payment';
+      btn.className = 'btn btn-primary w-100 mt-3';
+    } else {
+      btn.innerHTML = '<i class="fas fa-shopping-bag me-2"></i>Place Order (Cash on Delivery)';
+      btn.className = 'btn btn-success w-100 mt-3';
+    }
+  }
+
+  // Update payment option styling
+  document.querySelectorAll('.payment-option').forEach(option => {
+    option.style.backgroundColor = '';
+    option.style.borderColor = '#dee2e6';
+  });
+  event.target.closest('.payment-option').style.backgroundColor = '#f8f9fa';
+  event.target.closest('.payment-option').style.borderColor = '#0d6efd';
+}
+
+/* Place order (handles both COD and Razorpay) */
 async function placeOrder() {
   try {
     const selected = document.querySelector('input[name="selectedAddress"]:checked');
     if (!selected) {
-        return Toast.fire({
-            icon: 'warning',
-            title: 'Please select a delivery address'
-        });
+      return Toast.fire({
+        icon: 'warning',
+        title: 'Please select a delivery address'
+      });
+    }
+
+    const paymentMethod = document.querySelector('input[name="paymentMethod"]:checked');
+    if (!paymentMethod) {
+      return Toast.fire({
+        icon: 'warning',
+        title: 'Please select a payment method'
+      });
     }
 
     const addressId = selected.value;
-    const res = await fetch('/place-order', {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json', 'Accept': 'application/json' },
-      body: JSON.stringify({ addressId, paymentMethod: 'COD' })
-    });
-    const data = await res.json();
-    if (res.ok && data.success) {
-      window.location.href = '/orderSuccess/' + data.orderId;
+    const method = paymentMethod.value;
+
+    if (method === 'razorpay') {
+      // Initiate Razorpay payment
+      await initRazorpayPayment(addressId);
     } else {
-      Toast.fire({
+      // COD - place order directly
+      const res = await fetch('/place-order', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json', 'Accept': 'application/json' },
+        body: JSON.stringify({ addressId, paymentMethod: 'COD' })
+      });
+      const data = await res.json();
+      if (res.ok && data.success) {
+        window.location.href = '/orderSuccess/' + data.orderId;
+      } else {
+        Toast.fire({
           icon: 'error',
           title: data.message || 'Failed to place order'
-      });
+        });
+      }
     }
   } catch (err) {
     console.error('placeOrder error', err);
     Toast.fire({
-        icon: 'error',
-        title: 'Could not place order right now'
+      icon: 'error',
+      title: 'Could not place order right now'
     });
+  }
+}
+
+/* Initialize Razorpay Payment */
+async function initRazorpayPayment(addressId) {
+  try {
+    // Create order on backend
+    const res = await fetch('/create-razorpay-order', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json', 'Accept': 'application/json' },
+      body: JSON.stringify({ addressId })
+    });
+    const data = await res.json();
+
+    if (!res.ok || !data.success) {
+      return Toast.fire({
+        icon: 'error',
+        title: data.message || 'Failed to create payment order'
+      });
+    }
+
+    // Razorpay options
+    const options = {
+      key: data.razorpayKeyId, // Razorpay key from backend
+      amount: data.amount, // Amount in paise
+      currency: data.currency || 'INR',
+      name: 'Your Store Name',
+      description: 'Order Payment',
+      order_id: data.razorpayOrderId,
+      handler: async function (response) {
+        // Payment successful - verify on backend
+        await verifyRazorpayPayment(response, addressId, data.orderId);
+      },
+      prefill: {
+        name: data.customerName || '',
+        email: data.customerEmail || '',
+        contact: data.customerPhone || ''
+      },
+      theme: {
+        color: '#0d6efd'
+      },
+      modal: {
+        ondismiss: function() {
+          window.location.href = '/orderFailure/' + data.orderId;
+        }
+      }
+    };
+
+    const razorpay = new Razorpay(options);
+    razorpay.open();
+  } catch (err) {
+    console.error('Razorpay init error', err);
+    Toast.fire({
+      icon: 'error',
+      title: 'Could not initialize payment'
+    });
+  }
+}
+
+/* Verify Razorpay Payment */
+async function verifyRazorpayPayment(paymentResponse, addressId, orderId) {
+  try {
+    const res = await fetch('/verify-razorpay-payment', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json', 'Accept': 'application/json' },
+      body: JSON.stringify({
+        razorpay_order_id: paymentResponse.razorpay_order_id,
+        razorpay_payment_id: paymentResponse.razorpay_payment_id,
+        razorpay_signature: paymentResponse.razorpay_signature,
+        orderId: orderId,
+        addressId: addressId
+      })
+    });
+    const data = await res.json();
+
+    if (res.ok && data.success) {
+      Toast.fire({
+        icon: 'success',
+        title: 'Payment successful!'
+      });
+      setTimeout(() => {
+        window.location.href = '/orderSuccess/' + data.orderId;
+      }, 1000);
+    } else {
+      console.error('Payment verification failed:', data.message);
+      // Redirect to failure page
+      window.location.href = '/orderFailure/' + orderId;
+    }
+  } catch (err) {
+    console.error('Payment verification error', err);
+    // Redirect to failure page
+    window.location.href = '/orderFailure/' + orderId;
   }
 }
 

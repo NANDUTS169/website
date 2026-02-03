@@ -13,7 +13,21 @@
         <div class="card-body">
           <h5>Order ID: <strong><%= order.orderId %></strong></h5>
           <p class="text-muted">Placed on: <%= order.displayDate %></p>
-          <p>Status: <span class="badge bg-info text-dark"><%= order.status %></span></p>
+          <p>Status: 
+            <% 
+              let badgeClass = 'bg-info text-dark';
+              if (order.status === 'Failed' || order.status === 'Cancelled') {
+                badgeClass = 'bg-danger';
+              } else if (order.status === 'Delivered') {
+                badgeClass = 'bg-success';
+              } else if (order.status === 'Processing') {
+                badgeClass = 'bg-primary';
+              } else if (order.status === 'Shipped') {
+                badgeClass = 'bg-warning text-dark';
+              }
+            %>
+            <span class="badge <%= badgeClass %>"><%= order.status %></span>
+          </p>
 
           <hr>
 
@@ -37,6 +51,16 @@
       <% if (['Pending','Processing'].includes(order.status)) { %>
         <div class="mb-4">
           <button class="btn btn-outline-danger" id="cancelBtn">Cancel Order</button>
+        </div>
+      <% } %>
+
+      <!-- Retry payment button for failed orders -->
+      <% if (order.status === 'Failed' && order.paymentMethod === 'Razorpay') { %>
+        <div class="mb-4">
+          <div class="alert alert-warning" role="alert">
+            <strong>Payment Failed!</strong> Your order was created but the payment could not be processed.
+          </div>
+          <button class="btn btn-primary" id="retryPaymentBtn" onclick="retryPayment('<%= order.orderId %>')">Retry Payment</button>
         </div>
       <% } %>
 
@@ -85,7 +109,125 @@
   <% } %>
 </div>
 
+<!-- Scripts -->
+<script src="https://checkout.razorpay.com/v1/checkout.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
 <script>
+const Toast = Swal.mixin({
+  toast: true,
+  position: 'top-end',
+  showConfirmButton: false,
+  timer: 3000,
+  timerProgressBar: true
+});
+
+async function retryPayment(orderId) {
+  try {
+    const btn = document.getElementById('retryPaymentBtn');
+    btn.disabled = true;
+    btn.innerHTML = '<span class="spinner-border spinner-border-sm" role="status" aria-hidden="true"></span> Processing...';
+
+    // Request new Razorpay session for existing order
+    const res = await fetch('/retry-razorpay-payment', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ orderId: orderId })
+    });
+
+    const data = await res.json();
+
+    if (!res.ok || !data.success) {
+      btn.disabled = false;
+      btn.innerText = 'Retry Payment';
+      return Toast.fire({
+        icon: 'error',
+        title: data.message || 'Could not initiate payment'
+      });
+    }
+
+    const options = {
+      key: data.razorpayKeyId,
+      amount: data.amount,
+      currency: data.currency,
+      name: 'Footwear Store',
+      description: 'Retry Order Payment',
+      order_id: data.razorpayOrderId,
+      handler: async function (response) {
+        await verifyPayment(response, orderId);
+      },
+      prefill: {
+        name: data.customerName,
+        email: data.customerEmail,
+        contact: data.customerPhone
+      },
+      theme: {
+        color: '#0d6efd'
+      },
+      modal: {
+        ondismiss: function() {
+          btn.disabled = false;
+          btn.innerText = 'Retry Payment';
+          Toast.fire({
+            icon: 'info',
+            title: 'Payment cancelled'
+          });
+        }
+      }
+    };
+
+    const rzp = new Razorpay(options);
+    rzp.open();
+
+  } catch (err) {
+    console.error('Retry error', err);
+    const btn = document.getElementById('retryPaymentBtn');
+    if (btn) {
+      btn.disabled = false;
+      btn.innerText = 'Retry Payment';
+    }
+    Toast.fire({
+      icon: 'error',
+      title: 'Something went wrong'
+    });
+  }
+}
+
+async function verifyPayment(paymentResponse, orderId) {
+  try {
+    const res = await fetch('/verify-razorpay-payment', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({
+        razorpay_order_id: paymentResponse.razorpay_order_id,
+        razorpay_payment_id: paymentResponse.razorpay_payment_id,
+        razorpay_signature: paymentResponse.razorpay_signature,
+        orderId: orderId
+      })
+    });
+    const data = await res.json();
+
+    if (data.success) {
+      Toast.fire({
+        icon: 'success',
+        title: 'Payment successful!'
+      }).then(() => {
+        window.location.href = '/orderSuccess/' + data.orderId;
+      });
+    } else {
+      Toast.fire({
+        icon: 'error',
+        title: data.message || 'Payment verification failed'
+      });
+    }
+  } catch (err) {
+    console.error(err);
+    Toast.fire({
+      icon: 'error',
+      title: 'Verification error'
+    });
+  }
+}
+
 document.addEventListener('DOMContentLoaded', () => {
   const cancelBtn = document.getElementById('cancelBtn');
   if (!cancelBtn) return;

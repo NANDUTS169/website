@@ -54,12 +54,12 @@ const orderSchema = new Schema({
   },
   paymentMethod: {
     type: String,
-    enum: ["COD", "Online"],
+    enum: ["COD", "Online", "Razorpay"],
     required: true,
   },
   paymentStatus: {
     type: String,
-    enum: ["Pending", "Paid", "Failed"],
+    enum: ["Pending", "Paid", "Failed", "Completed"],
     default: "Pending",
   },
   status: {
@@ -81,6 +81,12 @@ const orderSchema = new Schema({
   couponApplied: {
     type: Boolean,
     default: false,
+  },
+  razorpayOrderId: {
+    type: String,
+  },
+  razorpayPaymentId: {
+    type: String,
   },
   invoiceDate: {
     type: Date,

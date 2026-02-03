@@ -6,6 +6,8 @@ const Cart = require('../../models/cartSchema');
 const Product = require('../../models/productSchema');
 const Order = require('../../models/orderSchema');
 const mongoose = require('mongoose');
+const razorpayInstance = require('../../helpers/razorpay');
+const crypto = require('crypto');
 
 
 // TODO : Undrestand later
@@ -318,7 +320,7 @@ const getInvoice = async (req, res) => {
       //   .text(shipping.country || '', 300, 220)
       //   .moveDown();
 
-     
+
       let y = 250;
       doc.lineWidth(0.5).rect(50, y, 500, 20).fill('#CCCCCC').stroke('#000000');
       doc.fillColor('#000000').font('Helvetica-Bold').fontSize(10);
@@ -340,7 +342,7 @@ const getInvoice = async (req, res) => {
         const itemTotal = qty * unit;
         subtotal += itemTotal;
 
-        
+
         doc.text(name.substring(0, 40), 60, y + 5);
         doc.text(qty.toString(), 280, y + 5, { width: 60, align: 'center' });
         doc.text(unit.toFixed(2), 350, y + 5, { width: 70, align: 'right' });
@@ -350,7 +352,7 @@ const getInvoice = async (req, res) => {
         y += 25;
       });
 
-     
+
       const discount = Number(order.discount || 0);
       const shipCost = Number(order.shipping || 0);
       const taxes = Number(order.taxes ?? Math.round((order.totalPrice || subtotal) * 0.12));
@@ -485,6 +487,258 @@ const listOrders = async (req, res) => {
   }
 };
 
+// Create Razorpay Order
+const createRazorpayOrder = async (req, res) => {
+  try {
+    const userId = req.session.user;
+    if (!userId) return res.status(401).json({ success: false, message: 'Unauthorized' });
+
+    const { addressId } = req.body;
+    if (!addressId) return res.status(400).json({ success: false, message: 'Address required' });
+
+    const userCart = await Cart.findOne({ userId: userId }).populate('items.productId').exec();
+    if (!userCart || !userCart.items || userCart.items.length === 0) {
+      return res.status(400).json({ success: false, message: 'Cart is empty' });
+    }
+
+    // Check for blocked products
+    for (const item of userCart.items) {
+      if (!item.productId || item.productId.isBlocked) {
+        return res.status(400).json({ success: false, message: 'Some items in your cart are no longer available.' });
+      }
+    }
+
+    const addressDoc = await Address.findOne({ UserId: userId }).lean();
+    if (!addressDoc) return res.status(400).json({ success: false, message: 'No saved addresses' });
+    const addr = addressDoc.address.find(a => String(a._id) === String(addressId));
+    if (!addr) return res.status(400).json({ success: false, message: 'Address not found' });
+
+    // Calculate totals
+    let totalPrice = 0;
+    const orderedItems = userCart.items.map(ci => {
+      const prod = ci.productId;
+      const qty = Number(ci.quantity || 1);
+      const unitPrice = Number(ci.price ?? prod.salePrice ?? prod.price ?? 0);
+      const itemTotal = Number(ci.totalPrice ?? unitPrice * qty);
+      totalPrice += itemTotal;
+      return { product: prod._id, quantity: qty, price: unitPrice };
+    });
+
+    const discount = 0;
+    const taxes = Math.round(totalPrice * 0.12);
+    const shipping = totalPrice > 500 ? 0 : 50;
+    const finalAmount = totalPrice - discount + taxes + shipping;
+
+    // Create order in database first (with Failed status until payment is verified)
+    const newOrder = new Order({
+      userId,
+      orderedItems,
+      shippingAddress: {
+        addressType: addr.addressType,
+        name: addr.fullName,
+        city: addr.city,
+        landmark: addr.streetAddress,
+        state: addr.state,
+        pincode: addr.pincode,
+        phone: addr.phone,
+        altPhone: addr.altPhone || ''
+      },
+      totalPrice,
+      discount,
+      finalAmount,
+      paymentMethod: 'Razorpay',
+      paymentStatus: 'Failed',
+      status: 'Failed',
+      couponApplied: false
+    });
+
+    const savedOrder = await newOrder.save();
+
+    // Create Razorpay order
+    const razorpayOrder = await razorpayInstance.orders.create({
+      amount: finalAmount * 100, // Amount in paise
+      currency: 'INR',
+      receipt: savedOrder.orderId,
+      notes: {
+        orderId: savedOrder.orderId,
+        userId: userId.toString()
+      }
+    });
+
+    // Get user info for prefill (you might want to fetch from User model)
+    return res.json({
+      success: true,
+      razorpayOrderId: razorpayOrder.id,
+      razorpayKeyId: process.env.RAZORPAY_KEY_ID,
+      amount: razorpayOrder.amount,
+      currency: razorpayOrder.currency,
+      orderId: savedOrder.orderId,
+      customerName: addr.fullName,
+      customerEmail: '', // Add user email if available
+      customerPhone: addr.phone
+    });
+  } catch (err) {
+    console.error('createRazorpayOrder error:', err);
+    return res.status(500).json({ success: false, message: 'Failed to create payment order: ' + (err.message || err) });
+  }
+};
+
+// Verify Razorpay Payment
+const verifyRazorpayPayment = async (req, res) => {
+  try {
+    const userId = req.session.user;
+    if (!userId) return res.status(401).json({ success: false, message: 'Unauthorized' });
+
+    const { razorpay_order_id, razorpay_payment_id, razorpay_signature, orderId, addressId } = req.body;
+
+    // Verify signature
+    const sign = razorpay_order_id + '|' + razorpay_payment_id;
+    const expectedSign = crypto
+      .createHmac('sha256', process.env.RAZORPAY_KEY_SECRET)
+      .update(sign.toString())
+      .digest('hex');
+
+    if (razorpay_signature !== expectedSign) {
+      return res.status(400).json({ success: false, message: 'Invalid payment signature' });
+    }
+
+    // Payment verified - update order and reduce stock
+    const order = await Order.findOne({ orderId }).populate('orderedItems.product');
+    if (!order) {
+      return res.status(404).json({ success: false, message: 'Order not found' });
+    }
+
+    if (String(order.userId) !== String(userId)) {
+      return res.status(403).json({ success: false, message: 'Unauthorized' });
+    }
+
+    // Reduce stock
+    const decremented = [];
+    for (const item of order.orderedItems) {
+      const prod = await Product.findById(item.product);
+      if (!prod) {
+        // Rollback
+        for (const d of decremented) {
+          await Product.findByIdAndUpdate(d.productId, { $inc: { quantity: d.qty } });
+        }
+        return res.status(400).json({ success: false, message: 'Product not found' });
+      }
+
+      const qty = Number(item.quantity || 1);
+      const updated = await Product.findOneAndUpdate(
+        { _id: prod._id, quantity: { $gte: qty } },
+        { $inc: { quantity: -qty } },
+        { new: true }
+      );
+
+      if (!updated) {
+        // Rollback
+        for (const d of decremented) {
+          await Product.findByIdAndUpdate(d.productId, { $inc: { quantity: d.qty } });
+        }
+        return res.status(400).json({ success: false, message: `Insufficient stock for ${prod.productName}` });
+      }
+
+      decremented.push({ productId: prod._id, qty });
+    }
+
+    // Update order status
+    order.paymentStatus = 'Completed';
+    order.status = 'Processing';
+    order.razorpayOrderId = razorpay_order_id;
+    order.razorpayPaymentId = razorpay_payment_id;
+    await order.save();
+
+    // Clear cart
+    const userCart = await Cart.findOne({ userId });
+    if (userCart) {
+      userCart.items = [];
+      await userCart.save();
+    }
+
+    return res.json({ success: true, orderId: order.orderId, message: 'Payment verified successfully' });
+  } catch (err) {
+    console.error('verifyRazorpayPayment error:', err);
+    return res.status(500).json({ success: false, message: 'Payment verification failed' });
+  }
+};
+
+const getOrderFailure = async (req, res) => {
+  try {
+    const userId = req.session?.user;
+    const orderId = req.params.orderId;
+    if (!orderId) return res.redirect('/');
+
+    const order = await Order.findOne({ orderId }).lean();
+    if (!order) return res.status(404).render('pageNotFound');
+
+    // Security check
+    if (String(order.userId) !== String(userId)) {
+      return res.redirect('/');
+    }
+
+    res.render('orderFailure', { order });
+  } catch (err) {
+    console.error(err);
+    res.redirect('/pageNotFound');
+  }
+};
+
+const retryRazorpayPayment = async (req, res) => {
+  try {
+    const userId = req.session.user;
+    if (!userId) return res.status(401).json({ success: false, message: 'Unauthorized' });
+
+    const { orderId } = req.body;
+    const order = await Order.findOne({ orderId: orderId, userId: userId });
+
+    if (!order) {
+      return res.status(404).json({ success: false, message: 'Order not found' });
+    }
+
+    if (order.status === 'Cancelled' || order.paymentStatus === 'Completed') {
+      return res.status(400).json({ success: false, message: 'Order cannot be repaid' });
+    }
+
+    // Create a new Razorpay order for the remaining amount (usually full amount)
+    // If previous Razorpay order is expired or valid, we generally create a new one to be safe
+    // or we can check if order.razorpayOrderId is still valid. Better to create new for retry loop.
+
+    const amountInPaise = Math.round(order.finalAmount * 100);
+
+    const razorpayOrder = await razorpayInstance.orders.create({
+      amount: amountInPaise,
+      currency: 'INR',
+      receipt: order.orderId,
+      notes: {
+        orderId: order.orderId,
+        userId: userId.toString(),
+        retry: 'true'
+      }
+    });
+
+    // Update order with new Razorpay Order ID just in case
+    order.razorpayOrderId = razorpayOrder.id;
+    await order.save();
+
+    return res.json({
+      success: true,
+      razorpayKeyId: process.env.RAZORPAY_KEY_ID,
+      razorpayOrderId: razorpayOrder.id,
+      amount: razorpayOrder.amount,
+      currency: razorpayOrder.currency,
+      customerName: order.shippingAddress.name,
+      customerPhone: order.shippingAddress.phone,
+      customerEmail: '' // fetch if needed
+    });
+
+  } catch (err) {
+    console.error('retryRazorpayPayment error:', err);
+    return res.status(500).json({ success: false, message: 'Retry initialization failed' });
+  }
+};
+
+
 module.exports = {
   placeOrder,
   getOrderSuccess,
@@ -493,5 +747,9 @@ module.exports = {
   getInvoice,
   getOrderStatuses,
   listOrders,
+  createRazorpayOrder,
+  verifyRazorpayPayment,
+  getOrderFailure,
+  retryRazorpayPayment
 
 };
