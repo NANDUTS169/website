@@ -6,33 +6,22 @@
             <h2 class="content-title card-title">Users</h2>
             <p>Manage your users here.</p>
         </div>
-        <div>
-            <input type="text" placeholder="Search by name or email" class="form-control bg-white" />
+        <div class="col-search">
+            <form action="" method="get" class="d-inline" onsubmit="updateTable($('#searchInput').val(), 1); return false;">
+                <div class="input-group input-group-sm border border-1 border-grey rounded-pill shadow-sm" style="width: 500px; background-color: white; padding: 3px;">
+                    <input type="text" class="form-control border-0 rounded-pill ms-2" placeholder="Search by name or email" name="search" id="searchInput" autocomplete="off" value="<%= locals.search || '' %>" style="box-shadow: none;">
+                    <button class="btn border-0" type="button" onclick="clearSearch()" id="clearButton" style="display: <%= locals.search ? 'inline-block' : 'none' %>;">
+                        <i class="material-icons md-close"></i>
+                    </button>
+                    <button class="btn btn-primary rounded-pill px-4 ms-2" type="submit">Search</button>
+                </div>
+            </form>
         </div>
     </div>
-    <div class="card mb-4">
+    <div id="userTableContainer">
+    <div class="card mb-4 mt-4">
         <header class="card-header">
-            <div class="row gx-3">
-                <div class="col-lg-4 col-md-6 me-auto">
-                    <input type="text" placeholder="Search..." class="form-control" />
-                </div>
-                <div class="col-lg-2 col-6 col-md-3">
-                    <select class="form-select">
-                        <option>Role</option>
-                        <option>Admin</option>
-                        <option>Customer</option>
-                        <option>Vendor</option>
-                    </select>
-                </div>
-                <div class="col-lg-2 col-6 col-md-3">
-                    <select class="form-select">
-                        <option>Status</option>
-                        <option>Active</option>
-                        <option>Inactive</option>
-                        <option>Show all</option>
-                    </select>
-                </div>
-            </div>
+            <h4 class="card-title">User Listings</h4>
         </header>
         <!-- card-header end// -->
         <div class="card-body">
@@ -81,23 +70,24 @@
             <ul class="pagination justify-content-start">
                 <% if (currentPage > 1) { %>
                     <li class="page-item">
-                        <a class="page-link" href="?page=<%= currentPage - 1 %>">&laquo;</a>
+                        <a class="page-link" href="?page=<%= currentPage - 1 %>&search=<%= locals.search || '' %>" onclick="handlePagination(event, '<%= currentPage - 1 %>')">&laquo;</a>
                     </li>
                 <% } %>
     
                 <% for (let i = 1; i <= totalPages; i++) { %>
                     <li class="page-item <%= currentPage === i ? 'active' : '' %>">
-                        <a class="page-link" href="?page=<%= i %>"><%= i %></a>
+                        <a class="page-link" href="?page=<%= i %>&search=<%= locals.search || '' %>" onclick="handlePagination(event, '<%= i %>')"><%= i %></a>
                     </li>
                 <% } %>
     
                 <% if (currentPage < totalPages) { %>
                     <li class="page-item">
-                        <a class="page-link" href="?page=<%= currentPage + 1 %>">&raquo;</a>
+                        <a class="page-link" href="?page=<%= currentPage + 1 %>&search=<%= locals.search || '' %>" onclick="handlePagination(event, '<%= currentPage + 1 %>')">&raquo;</a>
                     </li>
                 <% } %>
             </ul>
         </nav>
+    </div>
     </div>
     
 </section>
@@ -117,8 +107,61 @@
             confirmButtonText: `Yes, ${actionType} it!`
         }).then((result) => {
             if (result.isConfirmed) {
-                window.location.href = url;
+                // Instead of redirecting, we can use AJAX or keep simple redirect if preferred.
+                // For consistency with other pages, let's keep simple redirect or update dynamic table.
+                fetch(url).then(res => {
+                    if(res.ok) {
+                        updateTable($('#searchInput').val(), $('.page-item.active .page-link').first().text() || 1);
+                        Toast.fire({
+                            icon: 'success',
+                            title: `User ${actionType}ed successfully`
+                        });
+                    }
+                });
             }
         });
     }
+
+    const Toast = Swal.mixin({
+        toast: true,
+        position: 'top-end',
+        showConfirmButton: false,
+        timer: 3000,
+        timerProgressBar: true
+    });
+
+    // Live Search Logic
+    $(document).ready(function() {
+        let timeout = null;
+        $(document).on('input', '#searchInput', function() {
+            const query = $(this).val();
+            if (query.length > 0) {
+                $('#clearButton').show();
+            } else {
+                $('#clearButton').hide();
+            }
+            clearTimeout(timeout);
+            timeout = setTimeout(function() {
+                updateTable(query, 1);
+            }, 300);
+        });
+    });
+
+    function updateTable(search, page) {
+        const url = `/admin/users?search=${search}&page=${page || 1}`;
+        $('#userTableContainer').load(url + ' #userTableContainer > *');
+    }
+
+    function clearSearch() {
+        $('#searchInput').val('');
+        $('#clearButton').hide();
+        updateTable('', 1);
+    }
+
+    function handlePagination(e, page) {
+        e.preventDefault();
+        const search = $('#searchInput').val();
+        updateTable(search, page);
+    }
+
 </script>

@@ -28,6 +28,21 @@ const orderSchema = new Schema({
         type: Number,
         default: 0,
       },
+      status: {
+        type: String,
+        enum: ["Pending", "Processing", "Shipped", "Delivered", "Cancelled", "Returned"],
+        default: "Pending",
+      },
+      cancellationReason: {
+        type: String,
+      },
+      returnReason: {
+        type: String,
+      },
+      returnRequested: {
+        type: Boolean,
+        default: false,
+      },
     },
   ],
   shippingAddress: {
@@ -70,6 +85,7 @@ const orderSchema = new Schema({
       "Shipped",
       "Delivered",
       "Cancelled",
+      "Failed",
       "Return Requested",
       "Returned",
     ],
@@ -81,6 +97,9 @@ const orderSchema = new Schema({
   couponApplied: {
     type: Boolean,
     default: false,
+  },
+  couponCode: {
+    type: String, // Store the code so we can mark it used later
   },
   razorpayOrderId: {
     type: String,

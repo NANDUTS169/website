@@ -133,6 +133,10 @@
                         <% if (unavailable) { %>
                         <p><button class="btn btn-sm btn-secondary mt-2"
                                 disabled>Unavailable</button></p>
+                        <% } else if (product.variants && product.variants.length > 0) { %>
+                        <p>
+                            <a href="/productdetails/<%= product._id %>?error=select_size" class="btn btn-sm btn-primary mt-2">Add to Cart</a>
+                        </p>
                         <% } else { %>
                         <p><button class="btn btn-sm btn-primary mt-2"
                                 onclick="addToCart('<%= product._id %>')">Add
@@ -438,7 +442,9 @@
                 <span class="price">₹ ${p.salePrice}</span>
                 ${unavailable 
                   ? `<p><button class="btn btn-sm btn-secondary mt-2" disabled>Unavailable</button></p>`
-                  : `<p><button class="btn btn-sm btn-primary mt-2" onclick="addToCart('${p._id}')">Add to Cart</button></p>`}
+                  : (p.variants && p.variants.length > 0)
+                    ? `<p><a href="/productdetails/${p._id}?error=select_size" class="btn btn-sm btn-primary mt-2">Add to Cart</a></p>`
+                    : `<p><button class="btn btn-sm btn-primary mt-2" onclick="addToCart('${p._id}')">Add to Cart</button></p>`}
               </div>
             </div>
           </div>

@@ -11,6 +11,7 @@ const wishlistController = require("../controllers/user/wishlistController");
 const checkoutController = require("../controllers/user/checkoutController");
 const orderController = require("../controllers/user/orderController");
 const addressController = require("../controllers/user/addressController");
+const couponController = require("../controllers/user/couponController");
 
 router.get("/", userController.loadHomepage);
 
@@ -70,8 +71,11 @@ router.post('/cart/update', userAuth, cartController.updateCartItem);
 // router.get('/cart/remove/:itemId', userAuth, cartController.removeFromCart);
 router.delete('/cart/remove/:itemId', userAuth, cartController.removeFromCart);
 
-// Checkout & Order Management
+// Coupon Management
+router.post("/apply-coupon", userAuth, couponController.applyCoupon);
+router.post("/remove-coupon", userAuth, couponController.removeCoupon);
 
+// Checkout & Order Management
 router.get("/checkout", userAuth, checkoutController.getcheckoutPage);
 router.post('/place-order', userAuth, orderController.placeOrder);
 router.post('/create-razorpay-order', userAuth, orderController.createRazorpayOrder);
@@ -84,6 +88,9 @@ router.get('/order/:orderId/invoice', userAuth, orderController.getInvoice);
 router.get('/orderFailure/:orderId', userAuth, orderController.getOrderFailure);
 router.post('/retry-razorpay-payment', userAuth, orderController.retryRazorpayPayment);
 router.get('/orders/statuses', userAuth, orderController.getOrderStatuses);
+router.post('/order/:orderId/item/:itemId/cancel', userAuth, orderController.cancelOrderItem);
+router.post('/order/:orderId/return', userAuth, orderController.returnOrder);
+router.post('/order/:orderId/cancel-entire', userAuth, orderController.cancelEntireOrder);
 
 
 // Error Management

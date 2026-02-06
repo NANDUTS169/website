@@ -33,13 +33,23 @@
 
           <h6>Items</h6>
           <% order.itemsForView.forEach(function(it){ %>
-            <div class="d-flex align-items-center mb-3">
+            <div class="d-flex align-items-center mb-3 p-2 border rounded">
               <img src="/uploads/product-images/<%= (it.product && it.product.productImage && it.product.productImage[0]) ? it.product.productImage[0] : 'placeholder.png' %>"
-                   style="width:72px;height:72px;object-fit:cover;border-radius:4px;margin:1rem">
-              <div class="ms-3">
-                <strong><%= it.name %></strong><br>
+                   style="width:72px;height:72px;object-fit:cover;border-radius:4px;margin-right:1rem">
+              <div class="flex-grow-1">
+                <strong><%= it.name %></strong>
+                <span class="badge bg-secondary ms-2"><%= it.status %></span>
+                <br>
                 Qty: <%= it.qty %> &nbsp; × &nbsp; ₹ <%= it.unit %><br>
                 <small class="text-muted">Item total: ₹ <%= it.itemTotal %></small>
+              </div>
+              
+              <div class="ms-3">
+                <% if (['Pending', 'Processing'].includes(it.status)) { %>
+                  <button class="btn btn-sm btn-outline-danger" onclick="cancelItem('<%= order.orderId %>', '<%= it._id %>')">Cancel</button>
+                <% } else if (it.status === 'Delivered') { %>
+                  <button class="btn btn-sm btn-outline-secondary" onclick="returnItem('<%= order.orderId %>', '<%= it._id %>')">Return</button>
+                <% } %>
               </div>
             </div>
           <% }) %>
@@ -48,11 +58,16 @@
       </div>
 
       <!-- Buttons: cancel if allowed -->
-      <% if (['Pending','Processing'].includes(order.status)) { %>
-        <div class="mb-4">
-          <button class="btn btn-outline-danger" id="cancelBtn">Cancel Order</button>
-        </div>
-      <% } %>
+      <!-- Order Level Actions -->
+      <div class="d-flex gap-2 mb-4">
+        <% if (['Pending','Processing'].includes(order.status)) { %>
+          <button class="btn btn-outline-danger flex-fill" onclick="cancelEntireOrder('<%= order.orderId %>')">Cancel Entire Order</button>
+        <% } %>
+
+        <% if (order.status === 'Delivered') { %>
+          <button class="btn btn-outline-secondary flex-fill" onclick="returnOrder('<%= order.orderId %>')">Return Order</button>
+        <% } %>
+      </div>
 
       <!-- Retry payment button for failed orders -->
       <% if (order.status === 'Failed' && order.paymentMethod === 'Razorpay') { %>
@@ -121,13 +136,13 @@ const Toast = Swal.mixin({
   timerProgressBar: true
 });
 
+// Retry Payment Logic
 async function retryPayment(orderId) {
   try {
     const btn = document.getElementById('retryPaymentBtn');
     btn.disabled = true;
     btn.innerHTML = '<span class="spinner-border spinner-border-sm" role="status" aria-hidden="true"></span> Processing...';
 
-    // Request new Razorpay session for existing order
     const res = await fetch('/retry-razorpay-payment', {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
@@ -139,10 +154,7 @@ async function retryPayment(orderId) {
     if (!res.ok || !data.success) {
       btn.disabled = false;
       btn.innerText = 'Retry Payment';
-      return Toast.fire({
-        icon: 'error',
-        title: data.message || 'Could not initiate payment'
-      });
+      return Toast.fire({ icon: 'error', title: data.message || 'Could not initiate payment' });
     }
 
     const options = {
@@ -160,17 +172,12 @@ async function retryPayment(orderId) {
         email: data.customerEmail,
         contact: data.customerPhone
       },
-      theme: {
-        color: '#0d6efd'
-      },
+      theme: { color: '#0d6efd' },
       modal: {
         ondismiss: function() {
           btn.disabled = false;
           btn.innerText = 'Retry Payment';
-          Toast.fire({
-            icon: 'info',
-            title: 'Payment cancelled'
-          });
+          Toast.fire({ icon: 'info', title: 'Payment cancelled' });
         }
       }
     };
@@ -185,10 +192,7 @@ async function retryPayment(orderId) {
       btn.disabled = false;
       btn.innerText = 'Retry Payment';
     }
-    Toast.fire({
-      icon: 'error',
-      title: 'Something went wrong'
-    });
+    Toast.fire({ icon: 'error', title: 'Something went wrong' });
   }
 }
 
@@ -207,53 +211,143 @@ async function verifyPayment(paymentResponse, orderId) {
     const data = await res.json();
 
     if (data.success) {
-      Toast.fire({
-        icon: 'success',
-        title: 'Payment successful!'
-      }).then(() => {
+      Toast.fire({ icon: 'success', title: 'Payment successful!' }).then(() => {
         window.location.href = '/orderSuccess/' + data.orderId;
       });
     } else {
-      Toast.fire({
-        icon: 'error',
-        title: data.message || 'Payment verification failed'
-      });
+      Toast.fire({ icon: 'error', title: data.message || 'Payment verification failed' });
     }
   } catch (err) {
     console.error(err);
-    Toast.fire({
-      icon: 'error',
-      title: 'Verification error'
-    });
+    Toast.fire({ icon: 'error', title: 'Verification error' });
   }
 }
 
-document.addEventListener('DOMContentLoaded', () => {
-  const cancelBtn = document.getElementById('cancelBtn');
-  if (!cancelBtn) return;
+// --- Order & Item Actions ---
 
-  cancelBtn.addEventListener('click', async () => {
-    if (!confirm('Are you sure you want to cancel this order?')) return;
+// Cancel Specific Item
+async function cancelItem(orderId, itemId) {
+  const result = await Swal.fire({
+    title: 'Cancel Item?',
+    text: "Enter a reason (optional):",
+    input: 'text',
+    showCancelButton: true,
+    confirmButtonColor: '#d33',
+    confirmButtonText: 'Yes, cancel it!'
+  });
+
+  if (result.isConfirmed) {
     try {
-      const orderId = '<%= order.orderId %>';
-      const res = await fetch('/order/' + encodeURIComponent(orderId) + '/cancel', {
+      const res = await fetch(`/order/${orderId}/item/${itemId}/cancel`, {
         method: 'POST',
-        headers: { 'Content-Type': 'application/json', 'Accept': 'application/json' },
-        body: JSON.stringify({ reason: 'Cancelled from user order details' })
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ reason: result.value })
       });
       const data = await res.json();
-      if (res.ok && data.success) {
-        alert('Order cancelled');
-        location.reload();
+      if (data.success) {
+        Swal.fire('Cancelled!', 'Item has been cancelled.', 'success').then(() => location.reload());
       } else {
-        alert(data.message || 'Cancel failed');
+        Swal.fire('Error', data.message || 'Failed to cancel item', 'error');
       }
     } catch (err) {
-      console.error('Cancel error', err);
-      alert('Error cancelling order');
+      Swal.fire('Error', 'Server error', 'error');
     }
+  }
+}
+
+// Return Specific Item
+async function returnItem(orderId, itemId) {
+  const result = await Swal.fire({
+    title: 'Return Item?',
+    text: "Please provide a reason for return (required):",
+    input: 'text',
+    inputValidator: (value) => {
+      if (!value) return 'You need to write a reason!'
+    },
+    showCancelButton: true,
+    confirmButtonText: 'Submit Return Request'
   });
-});
+
+  if (result.isConfirmed) {
+    try {
+      const res = await fetch(`/order/${orderId}/return`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ reason: result.value, itemId: itemId })
+      });
+      const data = await res.json();
+      if (data.success) {
+        Swal.fire('Submitted!', 'Return request submitted.', 'success').then(() => location.reload());
+      } else {
+        Swal.fire('Error', data.message || 'Failed to submit return', 'error');
+      }
+    } catch (err) {
+      Swal.fire('Error', 'Server error', 'error');
+    }
+  }
+}
+
+// Cancel Entire Order
+async function cancelEntireOrder(orderId) {
+  const result = await Swal.fire({
+    title: 'Cancel Order?',
+    text: "Enter a reason (optional):",
+    input: 'text',
+    showCancelButton: true,
+    confirmButtonColor: '#d33',
+    confirmButtonText: 'Yes, cancel all!'
+  });
+
+  if (result.isConfirmed) {
+    try {
+      const res = await fetch(`/order/${orderId}/cancel-entire`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ reason: result.value })
+      });
+      const data = await res.json();
+      if (data.success) {
+        Swal.fire('Cancelled!', 'Order has been cancelled.', 'success').then(() => location.reload());
+      } else {
+        Swal.fire('Error', data.message || 'Failed to cancel order', 'error');
+      }
+    } catch (err) {
+      Swal.fire('Error', 'Server error', 'error');
+    }
+  }
+}
+
+// Return Entire Order
+async function returnOrder(orderId) {
+  const result = await Swal.fire({
+    title: 'Return Order?',
+    text: "Please provide a reason for return (required):",
+    input: 'text',
+    inputValidator: (value) => {
+      if (!value) return 'You need to write a reason!'
+    },
+    showCancelButton: true,
+    confirmButtonText: 'Submit Return Request'
+  });
+
+  if (result.isConfirmed) {
+    try {
+      const res = await fetch(`/order/${orderId}/return`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ reason: result.value }) // no itemId implies entire order
+      });
+      const data = await res.json();
+      if (data.success) {
+        Swal.fire('Submitted!', 'Return request submitted.', 'success').then(() => location.reload());
+      } else {
+        Swal.fire('Error', data.message || 'Failed to submit return', 'error');
+      }
+    } catch (err) {
+      Swal.fire('Error', 'Server error', 'error');
+    }
+  }
+}
 </script>
 
 <%- include('../../views/partials/user/footer') %>

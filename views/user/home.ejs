@@ -137,46 +137,162 @@
             <% for (let i = 0; i < products.length; i++) { %>
             <div class="col-lg-3 col-md-4 col-sm-6 mb-4 text-center d-flex">
                 <div class="product-entry border position-relative w-100">
-                    <!-- route to product detaul page -->
+                    <!-- route to product detail page -->
                     <a href="/productdetails/<%= products[i]._id %>"
                         class="prod-img d-block">
-						<!-- product image -->
+                        <!-- product image -->
                         <img src="/uploads/product-images/<%= products[i].productImage[0] %>"
                             class="img-fluid"
                             alt="<%= products[i].productName %>">
                     </a>
 
                     <!-- Wishlist Button -->
-                    <a href="/addToWishlist?id=<%= products[i]._id %>"
-                        class="wishlist-btn position-absolute"
-                        style="top: 10px; right: 10px; z-index: 100;">
+                    <button class="wishlist-btn position-absolute"
+                        style="top: 10px; right: 10px; z-index: 100; background: transparent; border: none;"
+                        onclick="addToWishlist(this, '<%= products[i]._id %>')">
                         <i class="icon-heart"
-                            style="font-size: 20px; color: red;"></i>
-                    </a>
+                            style="font-size: 20px; color: #ccc;"></i>
+                    </button>
 
                     <!-- Product Info -->
                     <div class="desc">
-                        <span class="price">$139.00</span>
+                        <h2><a href="/productdetails/<%= products[i]._id %>"><%= products[i].productName %></a></h2>
+                        <span class="price">₹<%= products[i].salePrice %></span>
 
-                        <!-- Add to Cart Button (optional) -->
-                        <p><a href="/addToCart/<%= products[i]._id %>"
-                                class="btn btn-sm btn-primary mt-2">Add to
-                                Cart</a></p>
+                        <!-- Add to Cart Button -->
+                        <p>
+                            <% if (products[i].variants && products[i].variants.length > 0) { %>
+                                <a href="/productdetails/<%= products[i]._id %>?error=select_size" class="btn btn-sm btn-primary mt-2">Add to Cart</a>
+                            <% } else { %>
+                                <button onclick="addToCart('<%= products[i]._id %>')" class="btn btn-sm btn-primary mt-2">Add to Cart</button>
+                            <% } %>
+                        </p>
                     </div>
                 </div>
             </div>
-            
             <% } %>
         </div>
     </div>
     <div class="row">
         <div class="col-md-12 text-center">
-            <p><a href="#" class="btn btn-primary btn-lg">Shop All Products</a>
+            <p><a href="/products" class="btn btn-primary btn-lg">Shop All Products</a>
             </p>
         </div>
     </div>
 </div>
 </div>
+
+<script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
+<script>
+    async function addToCart(productId) {
+        try {
+            const res = await fetch("/addToCart", {
+                method: "POST",
+                headers: {
+                    "Content-Type": "application/json"
+                },
+                body: JSON.stringify({
+                    productId,
+                    quantity: 1
+                })
+            });
+
+            const data = await res.json().catch(() => ({}));
+
+            if (res.status === 401) {
+                window.location = "/login?next=" + encodeURIComponent(window.location.pathname + window.location.search);
+                return;
+            }
+
+            if (!res.ok) {
+                Swal.fire({
+                    icon: "error",
+                    title: "Oops...",
+                    text: data.message || "Failed to add to cart.",
+                    confirmButtonColor: "#d33"
+                });
+                return;
+            }
+
+            Swal.fire({
+                icon: "success",
+                title: "Added to Cart!",
+                text: data.message || "Product added to cart successfully.",
+                showConfirmButton: false,
+                timer: 1500
+            });
+            
+            // Optional: update cart count in header if you have it
+            // if (data.cartCount) document.querySelector('.icon-badge').textContent = data.cartCount;
+
+        } catch (err) {
+            console.error(err);
+            Swal.fire({
+                icon: "error",
+                title: "Error",
+                text: "Something went wrong. Please try again later.",
+                confirmButtonColor: "#d33"
+            });
+        }
+    }
+
+    async function addToWishlist(btn, productId) {
+        try {
+            btn.disabled = true;
+            const res = await fetch("/wishlist/add", {
+                method: "POST",
+                headers: {
+                    "Content-Type": "application/json"
+                },
+                body: JSON.stringify({
+                    productId
+                })
+            });
+
+            const data = await res.json().catch(() => ({}));
+
+            if (res.status === 401) {
+                window.location = "/login?next=" + encodeURIComponent(window.location.pathname + window.location.search);
+                return;
+            }
+
+            if (!res.ok) {
+                Swal.fire({
+                    icon: "error",
+                    title: "Oops...",
+                    text: data.message || "Failed to add to wishlist.",
+                    confirmButtonColor: "#d33"
+                });
+                btn.disabled = false;
+                return;
+            }
+
+            Swal.fire({
+                icon: "success",
+                title: "Added to Wishlist!",
+                text: data.message || "Product added to wishlist successfully.",
+                showConfirmButton: false,
+                timer: 1500
+            });
+
+            const icon = btn.querySelector('i');
+            if (icon) {
+                icon.style.color = 'red';
+            }
+
+            btn.disabled = false;
+        } catch (err) {
+            console.error(err);
+            Swal.fire({
+                icon: "error",
+                title: "Error",
+                text: "Something went wrong. Please try again later.",
+                confirmButtonColor: "#d33"
+            });
+            btn.disabled = false;
+        }
+    }
+</script>
 
 <div class="colorlib-partner">
     <div class="container">

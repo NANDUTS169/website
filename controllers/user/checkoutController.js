@@ -3,7 +3,7 @@ const User = require('../../models/userSchema');
 const Product = require('../../models/productSchema');
 const Address = require('../../models/addressSchema');
 const Cart = require('../../models/cartSchema');
-const Order = require('../../models/orderSchema');
+const Coupon = require('../../models/couponSchema');
 
 const getcheckoutPage = async (req, res) => {
   try {
@@ -41,10 +41,31 @@ const getcheckoutPage = async (req, res) => {
       };
     });
 
-    const discount = 0;
+    // Coupon logic
+    let discount = 0;
+    let appliedCoupon = null;
+
+    if (req.session.coupon) {
+      const coupon = await Coupon.findOne({ name: req.session.coupon.code });
+      if (coupon && coupon.expireOn > new Date() && subTotal >= coupon.minimumPrice && !coupon.userId.includes(userId)) {
+        discount = (subTotal * Number(coupon.offerPrice)) / 100;
+        appliedCoupon = req.session.coupon.code;
+      } else {
+        // Coupon invalid or expired, clear session
+        req.session.coupon = null;
+      }
+    }
+
+    // Fetch available coupons
+    const availableCoupons = await Coupon.find({
+      isList: true,
+      expireOn: { $gt: new Date() },
+      userId: { $ne: userId } // User hasn't used it
+    }).lean();
+
     const taxes = Math.round(subTotal * 0.12); //  12% taxes
     const shipping = subTotal > 500 ? 0 : 50;
-    const total = subTotal - discount + taxes + shipping;
+    const total = Math.max(0, subTotal - discount + taxes + shipping);
 
     return res.render('checkout', {
       addresses,
@@ -53,14 +74,15 @@ const getcheckoutPage = async (req, res) => {
       discount,
       taxes,
       shipping,
-      total
+      total,
+      appliedCoupon,
+      availableCoupons
     });
   } catch (err) {
     console.error('getcheckoutPage error:', err);
     return res.redirect('/pageNotFound');
   }
 };
-
 
 module.exports = {
   getcheckoutPage

@@ -80,10 +80,10 @@ const addProducts = async (req, res) => {
                 }
             }
 
-            for(let i=0;i<variants.quantity;i++){
+            for (let i = 0; i < variants.quantity; i++) {
                 console.log(variants);
-                if(variants[i].quantity < 5){
-                    return res.status(400).render("admin/addProducts",{
+                if (variants[i].quantity < 5) {
+                    return res.status(400).render("admin/addProducts", {
                         error: "Cannnot add product. Minimum 5 products required in each varients",
                         formData: products
                     })
@@ -124,23 +124,29 @@ const addProducts = async (req, res) => {
 
 const getAllProducts = async (req, res) => {
     try {
-        const search = req.query || "";
-        const page = req.query.page || 1;
+        const search = req.query.search || "";
+        const categoryFilter = req.query.category || "";
+        const page = parseInt(req.query.page) || 1;
         const limit = 10;
 
-        const productData = await Product.find({
+        let query = {
             $or: [
-                { productName: { $regex: new RegExp(".*" + search + ".*", "i") } },
-                { brand: { $regex: new RegExp(".*" + search + ".*", "i") } },
-            ],
-        }).limit(limit * 1).skip((page - 1) * limit).populate('category').exec();
-
-        const count = await Product.find({
-            $or: [
-                { productName: { $regex: new RegExp(".*" + search + ".*", "i") } },
-                { brand: { $regex: new RegExp(".*" + search + ".*", "i") } },
+                { productName: { $regex: search, $options: "i" } },
+                { brand: { $regex: search, $options: "i" } },
             ]
-        }).countDocuments();
+        };
+
+        if (categoryFilter) {
+            query.category = categoryFilter;
+        }
+
+        const productData = await Product.find(query).sort({ createdAt: -1 })
+            .limit(limit)
+            .skip((page - 1) * limit)
+            .populate('category')
+            .exec();
+
+        const count = await Product.find(query).countDocuments();
 
         const category = await Category.find({ isListed: true });
         const brand = await Brand.find({ isBlocked: false });
@@ -149,16 +155,18 @@ const getAllProducts = async (req, res) => {
             res.render("admin-products", {
                 data: productData,
                 currentPage: page,
-                totalPages: page,
-                totalpages: Math.ceil(count / limit),
+                totalPages: Math.ceil(count / limit),
                 cat: category,
                 brand: brand,
+                search: search,
+                selectedCategory: categoryFilter
             })
         } else {
             res.render("page-404");
         }
 
     } catch (error) {
+        console.error(error);
         res.redirect("/pageerror");
     }
 }

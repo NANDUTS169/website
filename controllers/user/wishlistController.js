@@ -25,7 +25,7 @@ const getWishlist = async (req, res) => {
     const wishlist = await Wishlist.findOne({ userId })
       .populate({
         path: 'items.productId',
-        select: 'productName productImage quantity isBlocked status regularPrice salePrice category',
+        select: 'productName productImage quantity isBlocked status regularPrice salePrice category variants',
         populate: { path: 'category', select: 'isListed name' } // populate category inside product
       })
       .lean();

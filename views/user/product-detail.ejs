@@ -1,10 +1,7 @@
 <body>
     <%- include("../../views/partials/user/header") %>
-    <link
-        href="https://fonts.googleapis.com/css?family=Montserrat:300,400,500,600,700"
-        rel="stylesheet">
-    <link href="https://fonts.googleapis.com/css?family=Rokkitt:100,300,400,700"
-        rel="stylesheet">
+    <link href="https://fonts.googleapis.com/css?family=Montserrat:300,400,500,600,700" rel="stylesheet">
+    <link href="https://fonts.googleapis.com/css?family=Rokkitt:100,300,400,700" rel="stylesheet">
 
     <!-- Animate.css -->
     <link rel="stylesheet" href="/css/animate.css">
@@ -39,6 +36,7 @@
             color: red;
             margin-left: 5px;
         }
+
         .size-box {
             display: inline-block;
             border: 1px solid #ddd;
@@ -47,18 +45,19 @@
             cursor: pointer;
             border-radius: 4px;
         }
+
         .size-box.active {
             border-color: #000;
             background-color: #f0f0f0;
             font-weight: bold;
         }
+
         .size-box.disabled {
             color: #ccc;
             border-color: #eee;
             cursor: not-allowed;
         }
-    </style>
-    <style>
+
         .prod-img {
             display: block;
             overflow: hidden;
@@ -66,12 +65,13 @@
         }
 
         .prod-img img {
-            transition: transform 0.1s ease; /* Smooth movement */
+            transition: transform 0.1s ease;
             width: 100%;
             height: 100%;
             object-fit: cover;
         }
     </style>
+
     <div class="colorlib-loader"></div>
 
     <div class="breadcrumbs">
@@ -95,9 +95,7 @@
                         <div class="item">
                             <div class="product-entry border">
                                 <a href="#" class="prod-img">
-                                    <img src="/uploads/product-images/<%= image %>"
-                                        class="img-fluid product-gallery-img"
-                                        alt="<%= product.productName %>">
+                                    <img src="/uploads/product-images/<%= image %>" class="img-fluid product-gallery-img" alt="<%= product.productName %>">
                                 </a>
                             </div>
                         </div>
@@ -113,37 +111,17 @@
                         <span style="text-decoration: line-through;">₹
                             <%= product.regularPrice.toFixed(2) %>
                         </span>
-
-
-
-
-
-
-
-
-
-                        
-                        <% } %><span class="price-current">₹
+                        <% } %>
+                        <span class="price-current">₹
                             <%= product.salePrice.toFixed(2) %>
                         </span>
                         <% if (product.productOffer > 0) { %>
                         <span class="price-offer">(
                             <%= product.productOffer %>% OFF)
                         </span>
-
-
-
-
-
-
-
-
-
-                        
                         <% } %>
-                        </p>
 
-                        <p>
+                        <p class="mt-3">
                             <%= product.description %>
                         </p>
                         <p><strong>Brand:</strong>
@@ -152,340 +130,238 @@
                         <p><strong>Available Quantity:</strong>
                             <span id="displayStock"><%= product.quantity %></span>
                         </p>
+
                         <% if (product.variants && product.variants.length > 0) { %>
-                            <div class="mb-3">
-                                <p><strong>Select Size:</strong></p>
-                                <div class="size-selector">
-                                    <% product.variants.forEach((variant, index) => { %>
-                                        <div class="size-box <%= variant.quantity === 0 ? 'disabled' : '' %>" 
-                                             data-size="<%= variant.size %>" 
-                                             data-price="<%= variant.salePrice %>" 
-                                             data-regular-price="<%= variant.regularPrice %>"
-                                             data-stock="<%= variant.quantity %>"
-                                             onclick="selectSize(this)">
-                                            <%= variant.size %>
-                                        </div>
-                                    <% }) %>
+                        <div class="mb-3">
+                            <p><strong>Select Size:</strong></p>
+                            <div class="size-selector">
+                                <% product.variants.forEach((variant) => { %>
+                                <div class="size-box <%= variant.quantity === 0 ? 'disabled' : '' %>" data-size="<%= variant.size %>" data-price="<%= variant.salePrice %>" data-regular-price="<%= variant.regularPrice %>" data-stock="<%= variant.quantity %>" onclick="selectSize(this)">
+                                    <%= variant.size %>
                                 </div>
-                                <input type="hidden" id="selectedSize" name="size">
-                                <input type="hidden" id="maxStock" value="<%= product.quantity %>">
+                                <% }) %>
                             </div>
-                        <% } else { %>
+                            <input type="hidden" id="selectedSize" name="size">
                             <input type="hidden" id="maxStock" value="<%= product.quantity %>">
-                        <% } %>                
+                        </div>
+                        <% } else { %>
+                        <input type="hidden" id="maxStock" value="<%= product.quantity %>">
+                        <% } %>
+
                         <div class="input-group mb-4">
                             <span class="input-group-btn">
-                                <button type="button"
-                                    class="quantity-left-minus btn"
-                                    data-type="minus" data-field="">
+                                <button type="button" class="quantity-left-minus btn" data-type="minus">
                                     <i class="icon-minus2"></i>
                                 </button>
                             </span>
-                            <input type="text" id="quantity" name="quantity"
-                                class="form-control input-number" value="1"
-                                min="1" max="5">
+                            <input type="text" id="quantity" name="quantity" class="form-control input-number" value="1" min="1" max="5">
                             <span class="input-group-btn ml-1">
-                                <button type="button"
-                                    class="quantity-right-plus btn"
-                                    data-type="plus" data-field="">
+                                <button type="button" class="quantity-right-plus btn" data-type="plus">
                                     <i class="icon-plus2"></i>
                                 </button>
                             </span>
                         </div>
+
                         <div class="row">
-                            <div class="col-sm-12 text-center">
-                                <% if (product.status === 'Available' && !product.isBlocked) { %>
-                                <p class="addtocart"><a
-                                        href="/cart/add/<%= product._id %>"
-                                        class="btn btn-primary btn-addtocart"><i
-                                            class="icon-shopping-cart"></i> Add
-                                        to Cart</a></p>
-                                <% } else { %>
-                                <p class="addtocart"><button
-                                        class="btn btn-primary btn-addtocart disabled"
-                                        disabled><i
-                                            class="icon-shopping-cart"></i>
-                                        Unavailable</button></p>
-
-
-
-
-
-
-                                
-                                <% } %>
-                            </div>
-                        </div>
-                        </9div>
-                    </div>
-                </div>
-
-                <div class="row">
-                    <div class="col-sm-12">
-                        <div class="row">
-                            <div class="col-md-12 pills">
-                                <div class="related-products mt-5">
-                                    <h3 class="mb-4">Related Products</h3>
-                                    <div class="row">
-                                        <% if (relatedProducts && relatedProducts.length > 0) { %>
-                                        <% relatedProducts.forEach(item => { %>
-                                        <div class="col-md-3 col-6 mb-4">
-                                            <div class="card h-100">
-                                                <a
-                                                    href="/productdetails/<%= item._id %>">
-                                                    <img src="/uploads/product-images/<%= item.productImage && item.productImage.length > 0 ? item.productImage[0] : 'default.png' %>"
-                                                        class="card-img-top"
-                                                        alt="<%= item.productName %>">
-
-                                                </a>
-                                                <div
-                                                    class="card-body text-center">
-                                                    <h6 class="card-title">
-                                                        <%= item.name %>
-                                                    </h6>
-                                                    <p
-                                                        class="card-text text-muted">
-                                                        ₹
-                                                        <%= item.salePrice || item.regularPrice %>
-                                                    </p>
-                                                </div>
-                                            </div>
-                                        </div>
-                                        <% }) %>
-                                        <% } else { %>
-                                        <p class="text-muted">No related
-                                            products found.</p>
-
-
-                                        
-                                        <% } %>
-                                    </div>
+                            <div class="col-sm-12">
+                                <div class="d-flex gap-2">
+                                    <% if (product.status === 'Available' && !product.isBlocked && product.quantity > 0) { %>
+                                    <button id="addToCartBtn" class="btn btn-primary flex-grow-1 d-inline-flex align-items-center justify-content-center">
+                                        <i class="icon-shopping-cart me-2" style="font-size: inherit; padding-right: 10px;"></i> Add to Cart
+                                    </button>
+                                    <% } else { %>
+                                    <button class="btn btn-primary flex-grow-1 disabled d-inline-flex align-items-center justify-content-center" disabled>
+                                        <i class="icon-shopping-cart me-2" style="font-size: inherit; padding-right: 10px;"></i> Out of Stock
+                                    </button>
+                                    <% } %>
+                                    <button onclick="addToWishlist('<%= product._id %>')" class="btn btn-outline-primary d-inline-flex align-items-center justify-content-center">
+                                        <i class="icon-heart me-2" style="font-size: inherit; padding-right: 10px;"></i> Add to Wishlist
+                                    </button>
                                 </div>
-
                             </div>
                         </div>
                     </div>
                 </div>
             </div>
+
+            <div class="row">
+                <div class="col-sm-12">
+                    <div class="related-products mt-5">
+                        <h3 class="mb-4">Related Products</h3>
+                        <div class="row">
+                            <% if (relatedProducts && relatedProducts.length > 0) { %>
+                            <% relatedProducts.forEach(item => { %>
+                            <div class="col-md-3 col-6 mb-4">
+                                <div class="card h-100">
+                                    <a href="/productdetails/<%= item._id %>">
+                                        <img src="/uploads/product-images/<%= item.productImage && item.productImage.length > 0 ? item.productImage[0] : 'default.png' %>" class="card-img-top" alt="<%= item.productName %>">
+                                    </a>
+                                    <div class="card-body text-center">
+                                        <h6 class="card-title">
+                                            <%= item.productName %>
+                                        </h6>
+                                        <p class="card-text text-muted">
+                                            ₹<%= item.salePrice || item.regularPrice %>
+                                        </p>
+                                    </div>
+                                </div>
+                            </div>
+                            <% }) %>
+                            <% } else { %>
+                            <p class="text-muted">No related products found.</p>
+                            <% } %>
+                        </div>
+                    </div>
+                </div>
+            </div>
         </div>
+    </div>
 
+    <!-- Scripts -->
+    <script src="/js/jquery.min.js"></script>
+    <script src="/js/popper.min.js"></script>
+    <script src="/js/bootstrap.min.js"></script>
+    <script src="/js/jquery.easing.1.3.js"></script>
+    <script src="/js/jquery.waypoints.min.js"></script>
+    <script src="/js/jquery.flexslider-min.js"></script>
+    <script src="/js/owl.carousel.min.js"></script>
+    <script src="/js/jquery.magnific-popup.min.js"></script>
+    <script src="/js/magnific-popup-options.js"></script>
+    <script src="/js/bootstrap-datepicker.js"></script>
+    <script src="/js/jquery.stellar.min.js"></script>
+    <script src="/js/main.js"></script>
 
-        <!-- jQuery and other scripts remain unchanged -->
-        <script src="/js/jquery.min.js"></script>
-        <script src="/js/popper.min.js"></script>
-        <script src="/js/bootstrap.min.js"></script>
-        <script src="/js/jquery.easing.1.3.js"></script>
-        <script src="/js/jquery.waypoints.min.js"></script>
-        <script src="/js/jquery.flexslider-min.js"></script>
-        <script src="/js/owl.carousel.min.js"></script>
-        <script src="/js/jquery.magnific-popup.min.js"></script>
-        <script src="/js/magnific-popup-options.js"></script>
-        <script src="/js/bootstrap-datepicker.js"></script>
-        <script src="/js/jquery.stellar.min.js"></script>
-        <script src="/js/main.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
+    <script>
+        document.addEventListener("DOMContentLoaded", () => {
+            const quantityInput = document.getElementById("quantity");
+            const btnMinus = document.querySelector(".quantity-left-minus");
+            const btnPlus = document.querySelector(".quantity-right-plus");
+            const addToCartBtn = document.getElementById("addToCartBtn");
 
-        <!-- <script>
-    $(document).ready(function() {
-        var quantity = 0;
-        $('.quantity-right-plus').click(function(e) {
-            e.preventDefault();
-            var quantity = parseInt($('#quantity').val());
-            if (quantity <<%= product.quantity %>) {
-                $('#quantity').val(quantity + 1);
-            }
-        });
-
-        $('.quantity-left-minus').click(function(e) {
-            e.preventDefault();
-            var quantity = parseInt($('#quantity').val());
-            if (quantity > 1) {
-                $('#quantity').val(quantity - 1);
-            }
-        });
-    });
-</script> -->
-
-        <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
-        <script>
-            document.addEventListener("DOMContentLoaded", () => {
-                const quantityInput = document.getElementById(
-                    "quantity");
-                const btnMinus = document.querySelector(
-                    ".quantity-left-minus");
-                const btnPlus = document.querySelector(
-                    ".quantity-right-plus");
-
-                const addToCartBtn = document.querySelector(
-                    ".btn-addtocart");
-
-                const Toast = Swal.mixin({
-                    toast: true,
-                    position: 'top-end',
-                    showConfirmButton: false,
-                    timer: 3000,
-                    timerProgressBar: true,
-                    didOpen: (toast) => {
-                        toast.addEventListener('mouseenter', Swal.stopTimer)
-                        toast.addEventListener('mouseleave', Swal.resumeTimer)
-                    }
-                });
-
-                // Update quantity
-                btnMinus?.addEventListener("click", () => {
-                    let value = parseInt(quantityInput.value);
-                    if (value > 1) {
-                        quantityInput.value = value - 1;
-                    }
-                });
-
-                btnPlus?.addEventListener("click", () => {
-                    let value = parseInt(quantityInput.value);
-                    let max = parseInt(document.getElementById('maxStock').value) || 5;
-                    // Limit max to 5 or stock whichever is lower, or just stock if business logic says so. 
-                    // Controller says max 5 units per product.
-                    const ABSOLUTE_MAX = 5;
-                    const effectiveMax = Math.min(max, ABSOLUTE_MAX);
-
-                    if (value < effectiveMax) {
-                        quantityInput.value = value + 1;
-                    } else {
-                         Toast.fire({
-                            icon: 'info',
-                            title: 'Max quantity reached'
-                        });
-                    }
-                });
-
-
-                // Add to cart
-                addToCartBtn?.addEventListener("click", async (e) => {
-                    e.preventDefault();
-
-                    const productId = "<%= product._id %>";
-                    const quantity = parseInt(quantityInput.value);
-                    const size = document.getElementById("selectedSize")?.value;
-
-                    // Check if size is required but not selected
-                    const hasVariants = <%= (product.variants && product.variants.length > 0) ? 'true' : 'false' %>;
-                    if (hasVariants && !size) {
-                        Toast.fire({
-                            icon: 'warning',
-                            title: 'Please select a size'
-                        });
-                        return;
-                    }
-
-                    try {
-                        const response = await fetch("/addToCart", {
-                            method: "POST",
-                            headers: {
-                                "Content-Type": "application/json",
-                            },
-                            body: JSON.stringify({
-                                productId,
-                                quantity,
-                                size // Send size if selected
-                            }),
-                        });
-
-                        const result = await response.json();
-
-                        if (response.ok) {
-                            Toast.fire({
-                                icon: 'success',
-                                title: 'Product added to cart!'
-                            });
-                        } else {
-                            Toast.fire({
-                                icon: 'error',
-                                title: result.message || "Something went wrong!"
-                            });
-                        }
-                    } catch (error) {
-                        console.error("Error adding to cart:", error);
-                        Toast.fire({
-                            icon: 'error',
-                            title: "Failed to add to cart"
-                        });
-                    }
-                });
+            const Toast = Swal.mixin({
+                toast: true,
+                position: 'top-end',
+                showConfirmButton: false,
+                timer: 3000,
+                timerProgressBar: true
             });
 
-            function selectSize(element) {
-                if (element.classList.contains('disabled')) return;
+            // Check for redirect message
+            const urlParams = new URLSearchParams(window.location.search);
+            if (urlParams.get('error') === 'select_size') {
+                Toast.fire({
+                    icon: 'warning',
+                    title: 'Please select a size to proceed'
+                });
+                // Remove the query param from URL without reloading
+                const newUrl = window.location.pathname;
+                window.history.replaceState({}, document.title, newUrl);
+            }
 
-                // Remove active class from all
-                document.querySelectorAll('.size-box').forEach(el => el.classList.remove('active'));
-                
-                // Add active class to clicked
-                element.classList.add('active');
+            btnMinus?.addEventListener("click", () => {
+                let value = parseInt(quantityInput.value);
+                if (value > 1) quantityInput.value = value - 1;
+            });
 
-                // Update hidden input
-                const size = element.getAttribute('data-size');
-                document.getElementById('selectedSize').value = size;
-
-                // Update Price Display
-                const price = parseFloat(element.getAttribute('data-price'));
-                const regularPrice = parseFloat(element.getAttribute('data-regular-price'));
-                
-                // Assuming you have elements with these classes for price display
-                const currentPriceEl = document.querySelector('.price-current');
-                const regularPriceEl = document.querySelector('span[style="text-decoration: line-through;"]');
-                
-                if (currentPriceEl) currentPriceEl.innerText = '₹' + price.toFixed(2);
-                if (regularPriceEl && regularPrice) regularPriceEl.innerText = '₹' + regularPrice.toFixed(2);
-
-                // Update Stock info
-                const stock = parseInt(element.getAttribute('data-stock'));
-                const quantityInput = document.getElementById("quantity");
-                
-                // Update max stock hidden field and input max attribute
-                // Update max stock hidden field and input max attribute
-                document.getElementById('maxStock').value = stock;
-                // Update display stock
-                const displayStock = document.getElementById('displayStock');
-                if(displayStock) displayStock.innerText = stock;
-
-                quantityInput.max = stock;
-                
-                if (parseInt(quantityInput.value) > stock) {
-                    quantityInput.value = stock > 0 ? 1 : 0;
+            btnPlus?.addEventListener("click", () => {
+                let value = parseInt(quantityInput.value);
+                let max = parseInt(document.getElementById('maxStock').value) || 5;
+                const effectiveMax = Math.min(max, 5);
+                if (value < effectiveMax) {
+                    quantityInput.value = value + 1;
+                } else {
+                    Toast.fire({ icon: 'info', title: 'Max quantity reached' });
                 }
-                
-                // Optionally show stock status
-                // const addToCartBtn = document.querySelector(".btn-addtocart");
-                // if(stock === 0) {
-                //      addToCartBtn.classList.add('disabled');
-                //      addToCartBtn.innerText = 'Out of Stock';
-                // } else {
-                //      addToCartBtn.classList.remove('disabled');
-                //      addToCartBtn.innerHTML = '<i class="icon-shopping-cart"></i> Add to Cart';
-                // }
-            }
-        </script>
+            });
 
-        <script>
-            document.addEventListener("DOMContentLoaded", () => {
-                const imgContainers = document.querySelectorAll(".prod-img");
-        
-                imgContainers.forEach(container => {
-                    const img = container.querySelector("img");
-        
-                    container.addEventListener("mousemove", (e) => {
-                        const rect = container.getBoundingClientRect();
-                        const x = e.clientX - rect.left;
-                        const y = e.clientY - rect.top;
-        
-                        img.style.transformOrigin = `${x}px ${y}px`;
-                        img.style.transform = "scale(2)"; // Adjust zoom level as needed
+            addToCartBtn?.addEventListener("click", async (e) => {
+                e.preventDefault();
+                const productId = "<%= product._id %>";
+                const quantity = parseInt(quantityInput.value);
+                const size = document.getElementById("selectedSize")?.value;
+                const hasVariants = <%= (product.variants && product.variants.length > 0) ? 'true' : 'false' %>;
+
+                if (hasVariants && !size) {
+                    Toast.fire({ icon: 'warning', title: 'Please select a size' });
+                    return;
+                }
+
+                try {
+                    const response = await fetch("/addToCart", {
+                        method: "POST",
+                        headers: { "Content-Type": "application/json" },
+                        body: JSON.stringify({ productId, quantity, size }),
                     });
-        
-                    container.addEventListener("mouseleave", () => {
-                        img.style.transformOrigin = "center center";
-                        img.style.transform = "scale(1)";
-                    });
+                    const result = await response.json();
+                    if (response.ok) {
+                        Toast.fire({ icon: 'success', title: 'Product added to cart!' });
+                    } else {
+                        Toast.fire({ icon: 'error', title: result.message || "Something went wrong!" });
+                    }
+                } catch (error) {
+                    Toast.fire({ icon: 'error', title: "Failed to add to cart" });
+                }
+            });
+        });
+
+        function selectSize(element) {
+            if (element.classList.contains('disabled')) return;
+            document.querySelectorAll('.size-box').forEach(el => el.classList.remove('active'));
+            element.classList.add('active');
+            document.getElementById('selectedSize').value = element.getAttribute('data-size');
+            
+            const price = parseFloat(element.getAttribute('data-price'));
+            const stock = parseInt(element.getAttribute('data-stock'));
+            
+            document.querySelector('.price-current').innerText = '₹' + price.toFixed(2);
+            document.getElementById('displayStock').innerText = stock;
+            document.getElementById('maxStock').value = stock;
+        }
+
+        async function addToWishlist(productId) {
+            const Toast = Swal.mixin({
+                toast: true,
+                position: 'top-end',
+                showConfirmButton: false,
+                timer: 3000,
+                timerProgressBar: true
+            });
+
+            try {
+                const response = await fetch("/wishlist/add", {
+                    method: "POST",
+                    headers: { "Content-Type": "application/json" },
+                    body: JSON.stringify({ productId }),
+                });
+                const result = await response.json();
+                if (response.ok) {
+                    Toast.fire({ icon: 'success', title: result.message || 'Added to wishlist!' });
+                } else {
+                    Toast.fire({ icon: 'error', title: result.message || 'Failed to add to wishlist' });
+                }
+            } catch (error) {
+                Toast.fire({ icon: 'error', title: 'An error occurred' });
+            }
+        }
+
+        document.addEventListener("DOMContentLoaded", () => {
+            const imgContainers = document.querySelectorAll(".prod-img");
+            imgContainers.forEach(container => {
+                const img = container.querySelector("img");
+                container.addEventListener("mousemove", (e) => {
+                    const rect = container.getBoundingClientRect();
+                    const x = e.clientX - rect.left;
+                    const y = e.clientY - rect.top;
+                    img.style.transformOrigin = `${x}px ${y}px`;
+                    img.style.transform = "scale(2)";
+                });
+                container.addEventListener("mouseleave", () => {
+                    img.style.transformOrigin = "center center";
+                    img.style.transform = "scale(1)";
                 });
             });
-        </script>
-        <%- include("../../views/partials/user/footer") %>
+        });
+    </script>
+    <%- include("../../views/partials/user/footer") %>
 </body>

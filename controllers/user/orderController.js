@@ -7,6 +7,7 @@ const Product = require('../../models/productSchema');
 const Order = require('../../models/orderSchema');
 const mongoose = require('mongoose');
 const razorpayInstance = require('../../helpers/razorpay');
+const Coupon = require('../../models/couponSchema');
 const crypto = require('crypto');
 
 
@@ -79,10 +80,23 @@ const placeOrder = async (req, res) => {
       return { product: prod._id, quantity: qty, price: unitPrice };
     });
 
-    const discount = 0;
+    // Coupon Logic
+    let discount = 0;
+    let couponApplied = false;
+    let appliedCouponCode = null;
+
+    if (req.session.coupon) {
+      const coupon = await Coupon.findOne({ name: req.session.coupon.code });
+      if (coupon && coupon.expireOn > new Date() && totalPrice >= coupon.minimumPrice && !coupon.userId.includes(userId)) {
+        discount = Number(coupon.offerPrice);
+        couponApplied = true;
+        appliedCouponCode = coupon.name;
+      }
+    }
+
     const taxes = Math.round(totalPrice * 0.12);
     const shipping = totalPrice > 500 ? 0 : 50;
-    const finalAmount = totalPrice - discount + taxes + shipping;
+    const finalAmount = Math.max(0, totalPrice - discount + taxes + shipping);
 
     const newOrder = new Order({
       userId,
@@ -103,12 +117,20 @@ const placeOrder = async (req, res) => {
       paymentMethod,
       paymentStatus: paymentMethod === 'COD' ? 'Pending' : 'Pending',
       status: 'Pending',
-      couponApplied: false
+      couponApplied,
+      couponCode: appliedCouponCode
     });
 
     let savedOrder;
     try {
       savedOrder = await newOrder.save();
+
+      // Update coupon usage
+      if (couponApplied && appliedCouponCode) {
+        await Coupon.findOneAndUpdate({ name: appliedCouponCode }, { $addToSet: { userId: userId } });
+        req.session.coupon = null; // Clear from session
+      }
+
     } catch (err) {
       for (const d of decremented) {
         await Product.findByIdAndUpdate(d.productId, { $inc: { quantity: d.qty } }).exec();
@@ -210,7 +232,15 @@ const getOrderDetails = async (req, res) => {
       const name = prod.productName || prod.name || 'Product';
       const unit = Number(it.price || prod.salePrice || prod.price || 0);
       const qty = Number(it.quantity || 1);
-      return { name, unit, qty, itemTotal: unit * qty, product: prod };
+      return {
+        name,
+        unit,
+        qty,
+        itemTotal: unit * qty,
+        product: prod,
+        _id: it._id,
+        status: it.status
+      };
     });
 
     order.displayDate = order.invoiceDate ? new Date(order.invoiceDate).toLocaleString() : new Date(order.createdAt).toLocaleString();
@@ -524,10 +554,23 @@ const createRazorpayOrder = async (req, res) => {
       return { product: prod._id, quantity: qty, price: unitPrice };
     });
 
-    const discount = 0;
+    // Coupon Logic
+    let discount = 0;
+    let couponApplied = false;
+    let appliedCouponCode = null;
+
+    if (req.session.coupon) {
+      const coupon = await Coupon.findOne({ name: req.session.coupon.code });
+      if (coupon && coupon.expireOn > new Date() && totalPrice >= coupon.minimumPrice && !coupon.userId.includes(userId)) {
+        discount = Number(coupon.offerPrice);
+        couponApplied = true;
+        appliedCouponCode = coupon.name;
+      }
+    }
+
     const taxes = Math.round(totalPrice * 0.12);
     const shipping = totalPrice > 500 ? 0 : 50;
-    const finalAmount = totalPrice - discount + taxes + shipping;
+    const finalAmount = Math.max(0, totalPrice - discount + taxes + shipping);
 
     // Create order in database first (with Failed status until payment is verified)
     const newOrder = new Order({
@@ -549,7 +592,8 @@ const createRazorpayOrder = async (req, res) => {
       paymentMethod: 'Razorpay',
       paymentStatus: 'Failed',
       status: 'Failed',
-      couponApplied: false
+      couponApplied,
+      couponCode: appliedCouponCode
     });
 
     const savedOrder = await newOrder.save();
@@ -649,6 +693,12 @@ const verifyRazorpayPayment = async (req, res) => {
     order.razorpayPaymentId = razorpay_payment_id;
     await order.save();
 
+    // Mark coupon as used if applicable
+    if (order.couponCode) {
+      await Coupon.findOneAndUpdate({ name: order.couponCode }, { $addToSet: { userId: userId } });
+      req.session.coupon = null;
+    }
+
     // Clear cart
     const userCart = await Cart.findOne({ userId });
     if (userCart) {
@@ -738,6 +788,179 @@ const retryRazorpayPayment = async (req, res) => {
   }
 };
 
+// Cancel individual item in an order
+const cancelOrderItem = async (req, res) => {
+  try {
+    const userId = req.session?.user;
+    const { orderId, itemId } = req.params;
+    const { reason } = req.body;
+
+    const order = await Order.findOne({ orderId });
+    if (!order) return res.status(404).json({ success: false, message: 'Order not found' });
+
+    if (String(order.userId) !== String(userId)) {
+      return res.status(403).json({ success: false, message: 'Not allowed' });
+    }
+
+    // Find the item
+    const item = order.orderedItems.id(itemId);
+    if (!item) {
+      return res.status(404).json({ success: false, message: 'Item not found in order' });
+    }
+
+    // Check if item can be cancelled
+    if (!['Pending', 'Processing'].includes(item.status)) {
+      return res.status(400).json({ success: false, message: 'Item cannot be cancelled at this stage' });
+    }
+
+    // Cancel the item
+    item.status = 'Cancelled';
+    item.cancellationReason = reason || 'Cancelled by user';
+
+    // Restore stock
+    const pid = item.product;
+    if (pid) {
+      await Product.findByIdAndUpdate(pid, { $inc: { quantity: item.quantity } })
+        .catch(e => console.error('Restock failed', e));
+    }
+
+    // Check if all items are cancelled
+    const allCancelled = order.orderedItems.every(it => it.status === 'Cancelled');
+    if (allCancelled) {
+      order.status = 'Cancelled';
+    }
+
+    await order.save();
+
+    return res.json({ success: true, message: 'Item cancelled successfully' });
+  } catch (err) {
+    console.error('cancelOrderItem error:', err);
+    return res.status(500).json({ success: false, message: 'Server error' });
+  }
+};
+
+// Return order (only for delivered orders)
+const returnOrder = async (req, res) => {
+  try {
+    const userId = req.session?.user;
+    const orderId = req.params.orderId;
+    const { reason, itemId } = req.body;
+
+    if (!reason || reason.trim() === '') {
+      return res.status(400).json({ success: false, message: 'Return reason is required' });
+    }
+
+    const order = await Order.findOne({ orderId });
+    if (!order) return res.status(404).json({ success: false, message: 'Order not found' });
+
+    if (String(order.userId) !== String(userId)) {
+      return res.status(403).json({ success: false, message: 'Not allowed' });
+    }
+
+    // If itemId is provided, return specific item, otherwise return entire order
+    if (itemId) {
+      const item = order.orderedItems.id(itemId);
+      if (!item) {
+        return res.status(404).json({ success: false, message: 'Item not found in order' });
+      }
+
+      if (item.status !== 'Delivered') {
+        return res.status(400).json({ success: false, message: 'Only delivered items can be returned' });
+      }
+
+      item.status = 'Returned';
+      item.returnReason = reason;
+      item.returnRequested = true;
+
+      // Restore stock
+      const pid = item.product;
+      if (pid) {
+        await Product.findByIdAndUpdate(pid, { $inc: { quantity: item.quantity } })
+          .catch(e => console.error('Restock failed', e));
+      }
+
+      // Check if all items are returned
+      const allReturned = order.orderedItems.every(it => it.status === 'Returned');
+      if (allReturned) {
+        order.status = 'Returned';
+        order.returnReason = reason;
+      }
+    } else {
+      // Return entire order
+      if (order.status !== 'Delivered') {
+        return res.status(400).json({ success: false, message: 'Only delivered orders can be returned' });
+      }
+
+      order.status = 'Returned';
+      order.returnReason = reason;
+
+      // Mark all items as returned and restore stock
+      for (const item of order.orderedItems) {
+        item.status = 'Returned';
+        item.returnReason = reason;
+        item.returnRequested = true;
+
+        const pid = item.product;
+        if (pid) {
+          await Product.findByIdAndUpdate(pid, { $inc: { quantity: item.quantity } })
+            .catch(e => console.error('Restock failed', e));
+        }
+      }
+    }
+
+    await order.save();
+
+    return res.json({ success: true, message: 'Return request submitted successfully' });
+  } catch (err) {
+    console.error('returnOrder error:', err);
+    return res.status(500).json({ success: false, message: 'Server error' });
+  }
+};
+
+// Enhanced cancel entire order with optional reason
+const cancelEntireOrder = async (req, res) => {
+  try {
+    const userId = req.session?.user;
+    const orderId = req.params.orderId;
+    const { reason } = req.body;
+
+    const order = await Order.findOne({ orderId });
+    if (!order) return res.status(404).json({ success: false, message: 'Order not found' });
+
+    if (String(order.userId) !== String(userId)) {
+      return res.status(403).json({ success: false, message: 'Not allowed' });
+    }
+
+    if (!['Pending', 'Processing'].includes(order.status)) {
+      return res.status(400).json({ success: false, message: 'Order cannot be cancelled at this stage' });
+    }
+
+    order.status = 'Cancelled';
+    order.returnReason = reason || 'Cancelled by user';
+
+    // Cancel all items and restore stock
+    for (const item of order.orderedItems) {
+      if (['Pending', 'Processing'].includes(item.status)) {
+        item.status = 'Cancelled';
+        item.cancellationReason = reason || 'Cancelled by user';
+
+        const pid = item.product;
+        if (pid) {
+          await Product.findByIdAndUpdate(pid, { $inc: { quantity: item.quantity } })
+            .catch(e => console.error('Restock failed', e));
+        }
+      }
+    }
+
+    await order.save();
+
+    return res.json({ success: true, message: 'Order cancelled successfully' });
+  } catch (err) {
+    console.error('cancelEntireOrder error:', err);
+    return res.status(500).json({ success: false, message: 'Server error' });
+  }
+};
+
 
 module.exports = {
   placeOrder,
@@ -750,6 +973,8 @@ module.exports = {
   createRazorpayOrder,
   verifyRazorpayPayment,
   getOrderFailure,
-  retryRazorpayPayment
-
+  retryRazorpayPayment,
+  cancelOrderItem,
+  returnOrder,
+  cancelEntireOrder
 };

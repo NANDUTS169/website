@@ -18,7 +18,7 @@
           <div class="one-forth text-left px-4"><span>Product</span></div>
           <div class="one-eight text-center"><span>Price</span></div>
           <div class="one-eight text-center"><span>Status</span></div>
-          <div class="one-eight text-center"><span>Move to Cart</span></div>
+          <div class="one-eight text-center"><span>Add to Cart</span></div>
           <div class="one-eight text-center px-4"><span>Remove</span></div>
         </div>
 
@@ -40,9 +40,9 @@
 
             <div class="one-eight text-center">
               <div class="display-tc">
-                <% if (item.productId.isBlocked || !item.productId.isListed) { %>
+                <% if (item.productId.isBlocked || (item.productId.category && !item.productId.category.isListed)) { %>
                   <span class="text-danger">Unavailable</span>
-                <% } else if (item.productId.stock <= 0) { %>
+                <% } else if (item.productId.quantity <= 0) { %>
                   <span class="text-danger">Out of Stock</span>
                 <% } else { %>
                   <span class="text-success">In Stock</span>
@@ -52,22 +52,27 @@
 
             <div class="one-eight text-center">
               <div class="display-tc">
-                <% if (item.productId.stock > 0 && !item.productId.isBlocked && item.productId.isListed) { %>
-                  <form action="/addToCart" method="POST" style="display:inline;">
-                    <input type="hidden" name="productId" value="<%= item.productId._id %>">
-                    <button type="submit" class="btn btn-sm btn-primary">Move to Cart</button>
-                  </form>
+                <% if (item.productId.quantity > 0 && !item.productId.isBlocked && (item.productId.category && item.productId.category.isListed)) { %>
+                  <% if (item.productId.variants && item.productId.variants.length > 0) { %>
+                    <a href="/productdetails/<%= item.productId._id %>?error=select_size" class="btn btn-sm btn-primary d-inline-flex align-items-center">
+                      <i class="icon-shopping-cart me-1" style="font-size: inherit;"></i> Add to Cart
+                    </a>
+                  <% } else { %>
+                    <button type="button" class="btn btn-sm btn-primary d-inline-flex align-items-center" onclick="moveToCart('<%= item.productId._id %>')">
+                      <i class="icon-shopping-cart me-1" style="font-size: inherit;"></i> Add to Cart
+                    </button>
+                  <% } %>
                 <% } else { %>
-                  <button class="btn btn-sm btn-secondary" disabled>Unavailable</button>
+                  <button class="btn btn-sm btn-secondary d-inline-flex align-items-center" disabled>
+                    <i class="icon-shopping-cart me-1" style="font-size: inherit;"></i> Add to Cart
+                  </button>
                 <% } %>
               </div>
             </div>
 
             <div class="one-eight text-center">
               <div class="display-tc">
-                <!-- Wishlist toggle button -->
-                <button class="wishlist-btn"
-                        onclick="toggleWishlist(this, '<%= item.productId._id %>')">
+                <button class="wishlist-btn" onclick="removeFromWishlist(this, '<%= item.productId._id %>')">
                   <i class="icon-heart" style="font-size:20px; color:red;"></i>
                 </button>
               </div>
@@ -89,44 +94,38 @@
 <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
 
 <script>
-  // Add to wishlist
-  async function addToWishlist(btn, productId) {
+  const Toast = Swal.mixin({
+    toast: true,
+    position: 'top-end',
+    showConfirmButton: false,
+    timer: 3000,
+    timerProgressBar: true
+  });
+
+  async function moveToCart(productId) {
     try {
-      btn.disabled = true;
-      const res = await fetch("/wishlist/add", {
+      const response = await fetch("/addToCart", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ productId })
+        body: JSON.stringify({ productId, quantity: 1 })
       });
 
-      const data = await res.json().catch(() => ({}));
+      const result = await response.json();
 
-      if (!res.ok) {
-        Swal.fire({ icon: "error", title: "Oops...", text: data.message || "Failed to add to wishlist.", confirmButtonColor: "#d33" });
-        btn.disabled = false;
-        return;
+      if (response.ok) {
+        Toast.fire({ icon: 'success', title: 'Added to cart!' });
+      } else {
+        Toast.fire({ icon: 'error', title: result.message || 'Failed to add to cart' });
       }
-
-      Swal.fire({ icon: "success", title: "Added to Wishlist!", text: data.message || "Product added successfully.", showConfirmButton: false, timer: 1500 });
-
-      // Change heart icon to red
-      const icon = btn.querySelector('i');
-      if (icon) { icon.style.color = 'red'; }
-
-      btn.disabled = false;
-
-    } catch (err) {
-      console.error(err);
-      Swal.fire({ icon: "error", title: "Error", text: "Something went wrong.", confirmButtonColor: "#d33" });
-      btn.disabled = false;
+    } catch (error) {
+      console.error("Error adding to cart:", error);
+      Toast.fire({ icon: 'error', title: 'An error occurred' });
     }
   }
 
-  // Remove from wishlist
   async function removeFromWishlist(btn, productId) {
     try {
       btn.disabled = true;
-
       const res = await fetch("/wishlist/remove", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
@@ -136,35 +135,24 @@
       const data = await res.json().catch(() => ({}));
 
       if (!res.ok) {
-        Swal.fire({ icon: "error", title: "Oops...", text: data.message || "Failed to remove.", confirmButtonColor: "#d33" });
+        Toast.fire({ icon: "error", title: data.message || "Failed to remove." });
         btn.disabled = false;
         return;
       }
       
-      Swal.fire({ icon: "success", title: "Removed from Wishlist", text: data.message || "Product removed successfully.", showConfirmButton: false, timer: 1500 });
+      Toast.fire({ icon: "success", title: "Removed from Wishlist" });
 
-      // Remove from DOM dynamically
       const wishlistItem = document.getElementById(`wishlist-${productId}`);
       if (wishlistItem) wishlistItem.remove();
 
-      btn.disabled = false;
+      if (document.querySelectorAll('.wishlist-item').length === 0) {
+        setTimeout(() => location.reload(), 1500);
+      }
 
     } catch (err) {
       console.error(err);
-      Swal.fire({ icon: "error", title: "Error", text: "Something went wrong.", confirmButtonColor: "#d33" });
+      Toast.fire({ icon: "error", title: "Something went wrong." });
       btn.disabled = false;
-    }
-  }
-
-  // Toggle wishlist (add/remove)
-  async function toggleWishlist(btn, productId) {
-    const icon = btn.querySelector('i');
-    const isAdded = icon.style.color === 'red'; // currently in wishlist
-
-    if (isAdded) {
-      await removeFromWishlist(btn, productId);
-    } else {
-      await addToWishlist(btn, productId);
     }
   }
 </script>
