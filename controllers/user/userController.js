@@ -11,29 +11,25 @@ const loadHomepage = async (req, res) => {
     try {
         const user = res.locals.user; // Use res.locals.user which is set by middleware
         const categories = await Category.find({ isListed: true });
+        
         let productData = await Product.find(
-            {
+            { 
                 isBlocked: false,
                 category: { $in: categories.map(category => category._id) }, quantity: { $gt: 0 }
             }
         )
 
         productData.sort((a, b) => new Date(b.createdOn) - new Date(a.createdOn));
-        productData = productData.slice(0, 4);
+        productData = productData.slice(0,4);
 
-        // console.log(productData)
-        // console.log(user)
-
-        if (user) {
-            return res.render("home", { user, products: productData });
-        } else {
-            return res.render('home', { products: productData });
-        }
+        return res.render('home', { products: productData });
+        
     } catch (error) {
         console.log("Home page not found");
         res.status(500).send("Server error")
     }
 }
+    
 
 const pageNotFound = async (req, res) => {
     try {
@@ -45,7 +41,11 @@ const pageNotFound = async (req, res) => {
 
 const loadsignup = async (req, res) => {
     try {
-        return res.render("signup")
+        if (!req.session.user) {
+            return res.render("signup")
+        } else {
+            res.redirect("/")
+        }
     } catch (error) {
         console.log("Signup page not found")
         res.status(500).send("server error")
@@ -161,7 +161,7 @@ const login = async (req, res) => {
 
         if (!findUser) {
             return res.render("login", { message: "User not found" });
-        }
+        } 
         if (findUser.isBlocked) {
             return res.render("login", { message: "User is blocked by the admin" })
         }

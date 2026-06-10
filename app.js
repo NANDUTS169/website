@@ -25,6 +25,7 @@ app.use(session({
 }))
 
 app.use(async (req, res, next) => {
+    
     if (req.session.user) {
         try {
             const User = require('./models/userSchema');
@@ -63,13 +64,13 @@ app.use(passport.session());
 
 
 app.use((req, res, next) => {
-    res.set('cache-control', 'no-store')
+    res.set('Cache-Control', 'no-store, no-cache, must-revalidate, private');
+    res.set('Pragma', 'no-cache');
+    res.set('Expires', '0');
     next();
-})
+});
 
 app.set("view engine", "ejs")
-// app.set("views",(path.join(__dirname,'views/user')));
-// app.set("views",(path.join(__dirname,"views/admin")));
 
 app.set("views", [path.join(__dirname, 'views/user'), path.join(__dirname, 'views/admin')]);
 app.use(express.static(path.join(__dirname, "Public")));

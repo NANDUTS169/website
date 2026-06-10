@@ -40,9 +40,9 @@ const userAuth = (req, res, next) => {
 
 const adminAuth = (req, res, next) => {
     if (req.session.admin) {
-        User.findOne({ isAdmin: true })
+        User.findById(req.session.admin)
             .then(data => {
-                if (data) {
+                if (data && data.isAdmin) {
                     next();
                 } else {
                     req.session.destroy((err) => {

@@ -11,8 +11,146 @@ const Coupon = require('../../models/couponSchema');
 const crypto = require('crypto');
 
 
-// TODO : Undrestand later
+// const placeOrder = async (req, res) => {
+//   try {
+//     const userId = req.session.user;
+//     if (!userId) return res.status(401).json({ success: false, message: 'Unauthorized' });
+
+//     const { addressId, paymentMethod = 'COD' } = req.body;
+//     if (!addressId) return res.status(400).json({ success: false, message: 'Address required' });
+
+//     const userCart = await Cart.findOne({ userId: userId }).populate('items.productId').exec();
+//     if (!userCart || !userCart.items || userCart.items.length === 0) {
+//       return res.status(400).json({ success: false, message: 'Cart is empty' });
+//     }
+
+//     // Double-check for blocked products at the moment of placing order
+//     for (const item of userCart.items) {
+//       if (!item.productId || item.productId.isBlocked) {
+//         return res.status(400).json({ success: false, message: 'Some items in your cart are no longer available. Please check your cart.' });
+//       }
+//     }
+
+//     const addressDoc = await Address.findOne({ UserId: userId }).lean();
+//     if (!addressDoc) return res.status(400).json({ success: false, message: 'No saved addresses' });
+//     const addr = addressDoc.address.find(a => String(a._id) === String(addressId));
+//     if (!addr) return res.status(400).json({ success: false, message: 'Address not found' });
+//     const decremented = [];
+//     for (const ci of userCart.items) {
+//       const prod = ci.productId;
+//       if (!prod) {
+//         for (const d of decremented) {
+//           await Product.findByIdAndUpdate(d.productId, { $inc: { quantity: d.qty } }).exec();
+//         }
+//         return res.status(400).json({ success: false, message: 'One of the products was removed from store' });
+//       }
+
+//       const qty = Number(ci.quantity || 1);
+//       if (qty <= 0) {
+//         for (const d of decremented) {
+//           await Product.findByIdAndUpdate(d.productId, { $inc: { quantity: d.qty } }).exec();
+//         }
+//         return res.status(400).json({ success: false, message: 'Invalid quantity in cart' });
+//       }
+
+//       const updated = await Product.findOneAndUpdate(
+//         { _id: prod._id, quantity: { $gte: qty } },
+//         { $inc: { quantity: -qty } },
+//         { new: true }
+//       ).exec();
+
+//       if (!updated) {
+//         for (const d of decremented) {
+//           await Product.findByIdAndUpdate(d.productId, { $inc: { quantity: d.qty } }).exec();
+//         }
+//         return res.status(400).json({ success: false, message: `Insufficient stock for ${prod.productName || prod.name}` });
+//       }
+
+//       decremented.push({ productId: prod._id, qty });
+//     }
+
+//     let totalPrice = 0;
+//     const orderedItems = userCart.items.map(ci => {
+//       const prod = ci.productId;
+//       const qty = Number(ci.quantity || 1);
+//       const unitPrice = Number(ci.price ?? prod.salePrice ?? prod.price ?? 0);
+//       const itemTotal = Number(ci.totalPrice ?? unitPrice * qty);
+//       totalPrice += itemTotal;
+//       return { product: prod._id, quantity: qty, price: unitPrice };
+//     });
+
+//     // Coupon Logic
+//     let discount = 0;
+//     let couponApplied = false;
+//     let appliedCouponCode = null;
+
+//     if (req.session.coupon) {
+//       const coupon = await Coupon.findOne({ name: req.session.coupon.code });
+//       if (coupon && coupon.expireOn > new Date() && totalPrice >= coupon.minimumPrice && !coupon.userId.includes(userId)) {
+//         discount = Number(coupon.offerPrice);
+//         couponApplied = true;
+//         appliedCouponCode = coupon.name;
+//       }
+//     }
+
+//     const taxes = Math.round(totalPrice * 0.12);
+//     const shipping = totalPrice > 500 ? 0 : 50;
+//     const finalAmount = Math.max(0, totalPrice - discount + taxes + shipping);
+
+//     const newOrder = new Order({
+//       userId,
+//       orderedItems,
+//       shippingAddress: {
+//         addressType: addr.addressType,
+//         name: addr.fullName,
+//         city: addr.city,
+//         landmark: addr.streetAddress,
+//         state: addr.state,
+//         pincode: addr.pincode,
+//         phone: addr.phone,
+//         altPhone: addr.altPhone || ''
+//       },
+//       totalPrice,
+//       discount,
+//       finalAmount,
+//       paymentMethod,
+//       paymentStatus: paymentMethod === 'COD' ? 'Pending' : 'Pending',
+//       status: 'Pending',
+//       couponApplied,
+//       couponCode: appliedCouponCode
+//     });
+
+//     let savedOrder;
+//     try {
+//       savedOrder = await newOrder.save();
+
+//       // Update coupon usage
+//       if (couponApplied && appliedCouponCode) {
+//         await Coupon.findOneAndUpdate({ name: appliedCouponCode }, { $addToSet: { userId: userId } });
+//         req.session.coupon = null; // Clear from session
+//       }
+
+//     } catch (err) {
+//       for (const d of decremented) {
+//         await Product.findByIdAndUpdate(d.productId, { $inc: { quantity: d.qty } }).exec();
+//       }
+//       console.error('placeOrder: failed to save order, rolled back stock', err);
+//       return res.status(500).json({ success: false, message: 'Failed to create order' });
+//     }
+
+//     userCart.items = [];
+//     await userCart.save();
+
+//     return res.json({ success: true, orderId: savedOrder.orderId, _id: savedOrder._id });
+//   } catch (err) {
+//     console.error('placeOrder error (non-transaction):', err);
+//     return res.status(500).json({ success: false, message: 'Server error' });
+//   }
+// };
+
 const placeOrder = async (req, res) => {
+
+  console.log("PLACE ORDER FUNCTION STARTED");
   try {
     const userId = req.session.user;
     if (!userId) return res.status(401).json({ success: false, message: 'Unauthorized' });
@@ -25,69 +163,118 @@ const placeOrder = async (req, res) => {
       return res.status(400).json({ success: false, message: 'Cart is empty' });
     }
 
-    // Double-check for blocked products at the moment of placing order
+    // Check blocked products
     for (const item of userCart.items) {
       if (!item.productId || item.productId.isBlocked) {
-        return res.status(400).json({ success: false, message: 'Some items in your cart are no longer available. Please check your cart.' });
+        return res.status(400).json({
+          success: false,
+          message: 'Some items in your cart are no longer available. Please check your cart.'
+        });
       }
     }
 
     const addressDoc = await Address.findOne({ UserId: userId }).lean();
     if (!addressDoc) return res.status(400).json({ success: false, message: 'No saved addresses' });
+
     const addr = addressDoc.address.find(a => String(a._id) === String(addressId));
     if (!addr) return res.status(400).json({ success: false, message: 'Address not found' });
+
     const decremented = [];
+
     for (const ci of userCart.items) {
       const prod = ci.productId;
+
       if (!prod) {
         for (const d of decremented) {
-          await Product.findByIdAndUpdate(d.productId, { $inc: { quantity: d.qty } }).exec();
+          const rollbackProduct = await Product.findById(d.productId);
+          if (rollbackProduct) {
+            const rv = rollbackProduct.variants.find(v => v.size === d.size);
+            if (rv) rv.quantity += d.qty;
+            rollbackProduct.quantity = rollbackProduct.variants.reduce((sum, v) => sum + v.quantity, 0);
+            await rollbackProduct.save();
+          }
         }
         return res.status(400).json({ success: false, message: 'One of the products was removed from store' });
       }
 
       const qty = Number(ci.quantity || 1);
+      const size = ci.size;
+
       if (qty <= 0) {
-        for (const d of decremented) {
-          await Product.findByIdAndUpdate(d.productId, { $inc: { quantity: d.qty } }).exec();
-        }
         return res.status(400).json({ success: false, message: 'Invalid quantity in cart' });
       }
 
-      const updated = await Product.findOneAndUpdate(
-        { _id: prod._id, quantity: { $gte: qty } },
-        { $inc: { quantity: -qty } },
-        { new: true }
-      ).exec();
+      const product = await Product.findById(prod._id);
 
-      if (!updated) {
-        for (const d of decremented) {
-          await Product.findByIdAndUpdate(d.productId, { $inc: { quantity: d.qty } }).exec();
-        }
-        return res.status(400).json({ success: false, message: `Insufficient stock for ${prod.productName || prod.name}` });
+      console.log("Cart item size:", ci.size);
+      console.log("Product variants:", product.variants);
+
+
+      if (!product) {
+        return res.status(400).json({ success: false, message: 'Product not found' });
       }
 
-      decremented.push({ productId: prod._id, qty });
+      console.log("Cart size:", size);
+      console.log("Variants:", product.variants);
+
+      const variant = product.variants.find(v => String(v.size) === String(ci.size));
+
+      console.log("Matched variant:", variant);
+
+      if (!variant || variant.quantity < qty) {
+        return res.status(400).json({
+          success: false,
+          message: `Insufficient stock for ${product.productName}`
+        });
+      }
+
+      variant.quantity -= qty;
+      console.log("New variant quantity:", variant.quantity);
+
+      product.quantity = product.variants.reduce((sum, v) => sum + v.quantity, 0);
+
+      await product.save();
+      console.log("Product saved");
+
+      decremented.push({
+        productId: product._id,
+        size: size,
+        qty: qty
+      });
     }
 
     let totalPrice = 0;
+
     const orderedItems = userCart.items.map(ci => {
       const prod = ci.productId;
       const qty = Number(ci.quantity || 1);
-      const unitPrice = Number(ci.price ?? prod.salePrice ?? prod.price ?? 0);
+      const unitPrice = Number(ci.price ?? prod.salePrice ?? prod.regularPrice ?? 0);
       const itemTotal = Number(ci.totalPrice ?? unitPrice * qty);
+
       totalPrice += itemTotal;
-      return { product: prod._id, quantity: qty, price: unitPrice };
+
+      return {
+        product: prod._id,
+        size: ci.size,
+        quantity: qty,
+        price: unitPrice
+      };
     });
 
-    // Coupon Logic
+    // Coupon logic
     let discount = 0;
     let couponApplied = false;
     let appliedCouponCode = null;
 
     if (req.session.coupon) {
       const coupon = await Coupon.findOne({ name: req.session.coupon.code });
-      if (coupon && coupon.expireOn > new Date() && totalPrice >= coupon.minimumPrice && !coupon.userId.includes(userId)) {
+
+      if (
+        coupon &&
+        coupon.expireOn > new Date() &&
+        totalPrice >= coupon.minimumPrice &&
+        !coupon.userId.includes(userId)
+      ) {
         discount = Number(coupon.offerPrice);
         couponApplied = true;
         appliedCouponCode = coupon.name;
@@ -96,6 +283,7 @@ const placeOrder = async (req, res) => {
 
     const taxes = Math.round(totalPrice * 0.12);
     const shipping = totalPrice > 500 ? 0 : 50;
+
     const finalAmount = Math.max(0, totalPrice - discount + taxes + shipping);
 
     const newOrder = new Order({
@@ -122,19 +310,34 @@ const placeOrder = async (req, res) => {
     });
 
     let savedOrder;
+
     try {
       savedOrder = await newOrder.save();
 
-      // Update coupon usage
       if (couponApplied && appliedCouponCode) {
-        await Coupon.findOneAndUpdate({ name: appliedCouponCode }, { $addToSet: { userId: userId } });
-        req.session.coupon = null; // Clear from session
+        await Coupon.findOneAndUpdate(
+          { name: appliedCouponCode },
+          { $addToSet: { userId: userId } }
+        );
+        req.session.coupon = null;
       }
 
     } catch (err) {
       for (const d of decremented) {
-        await Product.findByIdAndUpdate(d.productId, { $inc: { quantity: d.qty } }).exec();
+        const rollbackProduct = await Product.findById(d.productId);
+        if (rollbackProduct) {
+          const rv = rollbackProduct.variants.find(v => v.size === d.size);
+          if (rv) rv.quantity += d.qty;
+
+          rollbackProduct.quantity = rollbackProduct.variants.reduce(
+            (sum, v) => sum + v.quantity,
+            0
+          );
+
+          await rollbackProduct.save();
+        }
       }
+
       console.error('placeOrder: failed to save order, rolled back stock', err);
       return res.status(500).json({ success: false, message: 'Failed to create order' });
     }
@@ -142,7 +345,12 @@ const placeOrder = async (req, res) => {
     userCart.items = [];
     await userCart.save();
 
-    return res.json({ success: true, orderId: savedOrder.orderId, _id: savedOrder._id });
+    return res.json({
+      success: true,
+      orderId: savedOrder.orderId,
+      _id: savedOrder._id
+    });
+
   } catch (err) {
     console.error('placeOrder error (non-transaction):', err);
     return res.status(500).json({ success: false, message: 'Server error' });

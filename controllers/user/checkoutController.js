@@ -56,6 +56,7 @@ const getcheckoutPage = async (req, res) => {
       }
     }
 
+
     // Fetch available coupons
     const availableCoupons = await Coupon.find({
       isList: true,
@@ -84,6 +85,8 @@ const getcheckoutPage = async (req, res) => {
   }
 };
 
+
 module.exports = {
   getcheckoutPage
 };
+

@@ -63,11 +63,15 @@ const securePassword = async (password) => {
 
 const getForgotPassPage = async (req, res) => {
     try {
+        if (req.session.user) {
+            return res.redirect("/");
+        }
         res.render("forgot-password");
     } catch (error) {
         res.redirect("/pageNotFound");
     }
 }
+
 
 const forgotEmailValid = async (req, res) => {
     try {
@@ -110,6 +114,9 @@ const verifyForgotPassOtp = async (req, res) => {
 
 const getResetPassPage = async (req, res) => {
     try {
+        if (req.session.user) {
+            return res.redirect("/");
+        }
         res.render("reset-password");
     } catch (error) {
         res.redirect("/pageNotFound");

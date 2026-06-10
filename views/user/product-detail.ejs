@@ -287,6 +287,7 @@
                     return;
                 }
 
+                
                 try {
                     const response = await fetch("/addToCart", {
                         method: "POST",
@@ -304,7 +305,7 @@
                 }
             });
         });
-
+        
         function selectSize(element) {
             if (element.classList.contains('disabled')) return;
             document.querySelectorAll('.size-box').forEach(el => el.classList.remove('active'));
@@ -318,6 +319,7 @@
             document.getElementById('displayStock').innerText = stock;
             document.getElementById('maxStock').value = stock;
         }
+
 
         async function addToWishlist(productId) {
             const Toast = Swal.mixin({
@@ -362,6 +364,10 @@
                 });
             });
         });
+
     </script>
+
     <%- include("../../views/partials/user/footer") %>
+
+
 </body>

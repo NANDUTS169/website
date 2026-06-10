@@ -448,90 +448,123 @@
         </div>
     </div>
 
-    <!-- Address Modal -->
-    <div class="modal fade" id="addressModal" tabindex="-1" aria-labelledby="addressModalLabel" aria-hidden="true">
-        <div class="modal-dialog modal-lg">
-            <div class="modal-content">
-                <div class="modal-header">
-                    <h5 class="modal-title" id="addressModalLabel">Add New Address</h5>
-                    <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
-                </div>
-                <div class="modal-body">
-                    <form id="addressForm">
-    <div class="row g-3">
-        <div class="col-md-6">
-            <label for="addressType" class="form-label">Address Type</label>
-            <select class="form-select" id="addressType" name="addressType" required>
+
+
+<!-- Add Address Modal  -->
+<div class="modal fade" id="addressModal" tabindex="-1">
+  <div class="modal-dialog modal-lg">
+    <div class="modal-content">
+
+      <div class="modal-header">
+        <h5 class="modal-title">Add New Address</h5>
+        <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+      </div>
+
+      <div class="modal-body">
+        <form id="addressForm" novalidate>
+
+          <div class="row g-3">
+
+            <!-- Address Type -->
+            <div class="col-md-6">
+              <label class="form-label">Address Type</label>
+              <select class="form-select" id="addressType" name="addressType">
                 <option value="">Select Type</option>
-                <option value="home">Home Address</option>
-                <option value="work">Work Address</option>
+                <option value="home">Home</option>
+                <option value="work">Work</option>
                 <option value="other">Other</option>
-            </select>
-        </div>
-        <div class="col-md-6">
-            <label for="fullName" class="form-label">Full Name</label>
-            <input type="text" class="form-control" id="fullName" name="fullName" placeholder="Enter full name" required>
-        </div>
-    </div>
+              </select>
+              <div class="text-danger small" id="addressTypeError"></div>
+            </div>
 
-    <div class="row g-3">
-        <div class="col-12">
-            <label for="streetAddress" class="form-label">Street Address</label>
-            <input type="text" class="form-control" id="streetAddress" name="streetAddress" placeholder="Enter street address" required>
-        </div>
-    </div>
+            <!-- Full Name -->
+            <div class="col-md-6">
+              <label class="form-label">Full Name</label>
+              <input type="text" class="form-control" id="fullName" name="fullName">
+              <div class="text-danger small" id="fullNameError"></div>
+            </div>
 
-    <div class="row g-3">
-        <div class="col-md-6">
-            <label for="city" class="form-label">City</label>
-            <input type="text" class="form-control" id="city" name="city" placeholder="Enter city" required>
-        </div>
-        <div class="col-md-3">
-            <label for="state" class="form-label">State</label>
-            <input type="text" class="form-control" id="state" name="state" placeholder="State" required>
-        </div>
-        <div class="col-md-3">
-            <label for="pincode" class="form-label">Pincode</label>
-            <input type="text" class="form-control" id="pincode" name="pincode" placeholder="pincode" required>
-        </div>
-    </div>
+          </div>
 
-    <div class="row g-3">
-        <div class="col-md-6">
-            <label for="country" class="form-label">Country</label>
-            <select class="form-select" id="country" name="country" required>
+          <!-- Street -->
+          <div class="row g-3">
+            <div class="col-12">
+              <label class="form-label">Street Address</label>
+              <input type="text" class="form-control" id="streetAddress" name="streetAddress">
+              <div class="text-danger small" id="streetAddressError"></div>
+            </div>
+          </div>
+
+          <!-- City / State / Pincode -->
+          <div class="row g-3">
+
+            <div class="col-md-6">
+              <label class="form-label">City</label>
+              <input type="text" class="form-control" id="city" name="city">
+              <div class="text-danger small" id="cityError"></div>
+            </div>
+
+            <div class="col-md-3">
+              <label class="form-label">State</label>
+              <input type="text" class="form-control" id="state" name="state">
+              <div class="text-danger small" id="stateError"></div>
+            </div>
+
+            <div class="col-md-3">
+              <label class="form-label">Pincode</label>
+              <input type="text" class="form-control" id="pincode" name="pincode">
+              <div class="text-danger small" id="pincodeError"></div>
+            </div>
+
+          </div>
+
+          <!-- Country + Phone -->
+          <div class="row g-3">
+
+            <div class="col-md-6">
+              <label class="form-label">Country</label>
+              <select class="form-select" id="country" name="country">
                 <option value="">Select Country</option>
                 <option value="India">India</option>
                 <option value="US">United States</option>
                 <option value="CA">Canada</option>
                 <option value="UK">United Kingdom</option>
-            </select>
-        </div>
-        <div class="col-md-6">
-            <label for="phone" class="form-label">Phone Number</label>
-            <input type="tel" class="form-control" id="phone" name="phone" placeholder="Enter phone number" required>
-        </div>
-    </div>
+              </select>
+              <div class="text-danger small" id="countryError"></div>
+            </div>
 
-    <div class="row g-3 mt-2">
-        <div class="col-12">
-            <div class="form-check">
+            <div class="col-md-6">
+              <label class="form-label">Phone</label>
+              <input type="tel" class="form-control" id="phone" name="phone">
+              <div class="text-danger small" id="phoneError"></div>
+            </div>
+
+          </div>
+
+          <!-- Checkbox -->
+          <div class="row g-3 mt-2">
+            <div class="col-12">
+              <div class="form-check">
                 <input class="form-check-input" type="checkbox" id="defaultAddress" name="defaultAddress">
-                <label class="form-check-label" for="defaultAddress">
-                    Set as default address
-                </label>
+                <label class="form-check-label">Set as default</label>
+              </div>
             </div>
-        </div>
+          </div>
+
+        </form>
+      </div>
+
+      <div class="modal-footer">
+        <button class="btn btn-outline-secondary" data-bs-dismiss="modal">Cancel</button>
+        <button class="btn btn-primary" onclick="saveAddress()">Save Address</button>
+      </div>
+
     </div>
-</form>
-                </div>
-                <div class="modal-footer">
-                    <button type="button" class="btn btn-outline-secondary" data-bs-dismiss="modal">Cancel</button>
-                    <button type="button" class="btn btn-primary" onclick="saveAddress()">Save Address</button>
-                </div>
-            </div>
-        </div>
-    </div>
+  </div>
+</div>
+
+
+
 
     <!-- Edit Address Modal  -->
      <div class="modal fade" id="editAddressModal" tabindex="-1" aria-labelledby="editAddressModalLabel" aria-hidden="true">
@@ -1083,7 +1116,7 @@
                 alert("Something went wrong. Please try again later.");
             }
         }
-76
+
         // Send reset link function
         function sendResetLink() {
             const email = document.getElementById('forgotEmail').value.trim();
@@ -1211,58 +1244,87 @@
     
     <script>
 
-//     async function saveAddress() {
-//     const form = document.getElementById("addressForm");
-//     const formData = new FormData(form);
-//     const data = Object.fromEntries(formData.entries());
+function validateAddressForm(formData) {
 
-//     // Convert checkbox "on" → true/false
-//     data.defaultAddress = formData.get("defaultAddress") ? true : false;
+    let isValid = true
 
-//     try {
-//         const res = await fetch("/addresses", {
-//             method: "POST",
-//             headers: { "Content-Type": "application/json" },
-//             body: JSON.stringify(data)
-//         });
+    // Clear errors
+    document.querySelectorAll(".text-danger").forEach(el => el.innerText = "")
+    document.querySelectorAll(".form-control, .form-select").forEach(el => el.classList.remove("is-invalid"))
 
-//         const result = await res.json();
+    const name = formData.get("fullName")?.trim()
+    const street = formData.get("streetAddress")?.trim()
+    const city = formData.get("city")?.trim()
+    const state = formData.get("state")?.trim()
+    const pincode = formData.get("pincode")?.trim()
+    const country = formData.get("country")?.trim()
+    const phone = formData.get("phone")?.trim()
+    const type = formData.get("addressType")
 
-//         if (result.success) {
-//             // Close modal
-//             const modal = bootstrap.Modal.getInstance(document.getElementById("addressModal"));
-//             modal.hide();
+    const nameRegex = /^[A-Za-z ]{2,50}$/
+    const phoneRegex = /^[0-9]{10}$/
+    const pincodeRegex = /^[0-9]{6}$/
 
-//             // Clear form
-//             form.reset();
+    if (!type) {
+        document.getElementById("addressTypeError").innerText = "Select address type"
+        isValid = false
+    }
 
-//             // Refresh address list without reload
-//             updateAddressList(result.addresses);
-//         } else {
-//             alert(result.message || "Failed to add address");
-//         }
-//     } catch (err) {
-//         console.error("Error saving address:", err);
-//         alert("Something went wrong. Try again!");
-//     }
-// }
+    if (!name || !nameRegex.test(name)) {
+        document.getElementById("fullNameError").innerText = "Enter valid name"
+        document.getElementById("fullName").classList.add("is-invalid")
+        isValid = false
+    }
 
+    if (!street || street.length < 5) {
+        document.getElementById("streetAddressError").innerText = "Enter valid address"
+        document.getElementById("streetAddress").classList.add("is-invalid")
+        isValid = false
+    }
+
+    if (!city) {
+        document.getElementById("cityError").innerText = "City required"
+        document.getElementById("city").classList.add("is-invalid")
+        isValid = false
+    }
+
+    if (!state) {
+        document.getElementById("stateError").innerText = "State required"
+        document.getElementById("state").classList.add("is-invalid")
+        isValid = false
+    }
+
+    if (!pincodeRegex.test(pincode)) {
+        document.getElementById("pincodeError").innerText = "6 digit pincode"
+        document.getElementById("pincode").classList.add("is-invalid")
+        isValid = false
+    }
+
+    if (!country) {
+        document.getElementById("countryError").innerText = "Select country"
+        isValid = false
+    }
+
+    if (!phoneRegex.test(phone)) {
+        document.getElementById("phoneError").innerText = "Phone must be 10 digits"
+        document.getElementById("phone").classList.add("is-invalid")
+        isValid = false
+    }
+
+    return isValid
+}
 
 async function saveAddress() {
-    const form = document.getElementById("addressForm");
-    const formData = new FormData(form);
-    const data = Object.fromEntries(formData.entries());
 
-    // checkbox handling
-    data.defaultAddress = formData.get("defaultAddress") ? true : false;
+    const form = document.getElementById("addressForm")
+    const formData = new FormData(form)
 
-    // ✅ frontend validation
-    for (const [key, value] of Object.entries(data)) {
-        if (key !== "defaultAddress" && (!value || value.trim() === "")) {
-            alert(`${key} is required`);
-            return;
-        }
+    if(!validateAddressForm(formData)){
+        return
     }
+
+    const data = Object.fromEntries(formData.entries())
+    data.defaultAddress = formData.get("defaultAddress") ? true : false
 
     try {
         const res = await fetch("/addresses", {
@@ -1274,25 +1336,23 @@ async function saveAddress() {
         const result = await res.json();
 
         if (result.success) {
-            // close modal
+            // Close modal
             const modal = bootstrap.Modal.getInstance(document.getElementById("addressModal"));
             modal.hide();
 
-            // clear form
+            // Clear form
             form.reset();
 
-            // refresh UI
-            updateAddressList(result.addresses.filter(a => a.isActive));
+            // Refresh address list without reload
+            updateAddressList(result.addresses);
         } else {
             alert(result.message || "Failed to add address");
         }
     } catch (err) {
-        console.error("❌ Error saving address:", err);
+        console.error("Error saving address:", err);
         alert("Something went wrong. Try again!");
     }
 }
-
-
 
 // Update DOM dynamically
 function updateAddressList(addresses) {
@@ -1366,7 +1426,7 @@ async function deleteAddress(addressId) {
 let editingAddressId = null; // null = add mode, value = edit mode
 
 // Open modal for ADD
-function openAddAddress() {
+async function openAddAddress() {
     editingAddressId = null;
     document.getElementById("addressModalLabel").innerText = "Add New Address";
     document.getElementById("addressForm").reset();
@@ -1374,33 +1434,6 @@ function openAddAddress() {
     const modal = new bootstrap.Modal(document.getElementById("addressModal"));
     modal.show();
 }
-
-// Open modal for EDIT
-// async function openEditAddress(addressId) {
-//     editingAddressId = addressId;
-//     document.getElementById("addressModalLabel").innerText = "Edit Address";
-
-//     try {
-//         // fetch details from DOM (already rendered by EJS)
-//         const card = document.querySelector(`button[onclick="openEditAddress('${addressId}')"]`).closest(".address-item");
-//         const lines = card.querySelector("p").innerHTML.split("<br>");
-        
-//         document.getElementById("fullName").value = lines[0].trim();
-//         document.getElementById("streetAddress").value = lines[1].split(",")[0].trim();
-//         document.getElementById("city").value = lines[1].split(",")[1].trim();
-//         document.getElementById("state").value = lines[2].split("-")[0].trim();
-//         document.getElementById("pincode").value = lines[2].split("-")[1].trim();
-//         document.getElementById("country").value = lines[3].trim();
-//         document.getElementById("phone").value = lines[4].replace("Phone:", "").trim();
-
-//         const modal = new bootstrap.Modal(document.getElementById("editAddressModal"));
-//         modal.show();
-//     } catch (err) {
-//         console.error("Error pre-filling edit form:", err);
-//         alert("Could not load address for editing");
-//     }
-// }
-
 
 async function openEditAddress(addressId) {
     editingAddressId = addressId;
@@ -1449,6 +1482,20 @@ async function updateAddress() {
     phone: document.getElementById("editPhone").value,
     defaultAddress: document.getElementById("editDefaultAddress").checked
   };
+
+const tempForm = new FormData()
+
+tempForm.append("fullName", data.fullName)
+tempForm.append("streetAddress", data.streetAddress)
+tempForm.append("city", data.city)
+tempForm.append("state", data.state)
+tempForm.append("pincode", data.pincode)
+tempForm.append("country", data.country)
+tempForm.append("phone", data.phone)
+
+if(!validateAddressForm(tempForm)){
+    return
+}
 
   try {
     const res = await fetch(`/addresses/${addressId}`, {
@@ -1556,6 +1603,7 @@ async function updateAddress() {
       setInterval(fetchAndUpdateStatuses, 15000);
     });
   })();
+  
 </script>
 
 
